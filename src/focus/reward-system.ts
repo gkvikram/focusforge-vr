@@ -46,8 +46,11 @@ import {
 } from './effects.js';
 import { DONE, focusStore } from './focus-store.js';
 import { Hand, pulseHaptics } from './haptics.js';
+import { worldTheme } from '../world/world-theme.js';
 import {
   CORE_POSITION,
+  CORE_READOUT_SIZE,
+  CORE_READOUT_Y,
   CORE_RING_RADIUS,
   TARGET_HEIGHTS,
   TARGET_ORBIT_RADII,
@@ -68,7 +71,7 @@ const RELEASE_SETTLE_FRAMES = 3;
 const SAMPLE_COUNT = 6;
 const RESPAWN_SECONDS = 3.2;
 const CHARGE_STEP = 0.25;
-const OVERCHARGE_SECONDS = 3;
+const OVERCHARGE_SECONDS = 8;
 const QUICK_TAP_MS = 350;
 const RECENT_MOVE_MS = 900;
 
@@ -92,6 +95,14 @@ interface OrbState {
   from: Vector3;
   hover: Vector3;
   prev: Vector3;
+  /** True once thrown or tapped at a target; the source card is cleared when the orb ends. */
+  launched: boolean;
+  /** Target the orb steers toward in flight so a tap always lands. */
+  homing: TargetView | null;
+  /** Target requested before the physics body was ready. */
+  queued: TargetView | null;
+  heading: Vector3;
+  speed: number;
 }
 
 interface TargetView {
@@ -185,6 +196,7 @@ export class RewardSystem extends createSystem({
   private tmpB = new Vector3();
   private tmpC = new Vector3();
   private tmpDir = new Vector3();
+  private tmpStep = new Vector3();
   private releaseVelocity = new Vector3();
   private launchVelocity = new Vector3();
   private corePosition = new Vector3(...CORE_POSITION);
@@ -287,7 +299,7 @@ export class RewardSystem extends createSystem({
     const taskId = entity.getValue(TaskCard, 'taskId');
     if (taskId == null) return;
     const task = focusStore.tasks[taskId];
-    if (task == null || task.column !== DONE) return;
+    if (task == null || task.removed || task.column !== DONE) return;
     const movedAt = this.recentMoves.get(taskId) ?? 0;
     if (performance.now() - movedAt < RECENT_MOVE_MS) return;
     this.spawnOrb(entity);
@@ -393,6 +405,11 @@ export class RewardSystem extends createSystem({
       from,
       hover: new Vector3(),
       prev: from.clone(),
+      launched: false,
+      homing: null,
+      queued: null,
+      heading: new Vector3(),
+      speed: TAP_SPEED,
     };
     this.sampleCount = 0;
     this.sampleHead = 0;
@@ -404,8 +421,22 @@ export class RewardSystem extends createSystem({
   private endOrb(): void {
     const orb = this.orb;
     this.orb = null;
+    const launched = orb?.launched ?? false;
     if (orb != null) orb.entity.dispose();
-    this.restoreCard();
+    if (launched) {
+      this.clearHiddenCard();
+    } else {
+      this.restoreCard();
+    }
+  }
+
+  /** The thrown orb consumed its card: remove the task from the board for good. */
+  private clearHiddenCard(): void {
+    const entity = this.hiddenCard;
+    this.hiddenCard = null;
+    this.restoring = null;
+    const taskId = entity?.getValue(TaskCard, 'taskId');
+    if (taskId != null && taskId >= 0) focusStore.removeTask(taskId);
   }
 
   private computeHover(out: Vector3, followCamera: boolean): void {
@@ -477,6 +508,12 @@ export class RewardSystem extends createSystem({
         break;
       }
     }
+
+    const queued = orb.queued;
+    if (queued != null && (orb.phase === 'floating' || orb.phase === 'morphing')) {
+      orb.queued = null;
+      this.launchAtTarget(queued);
+    }
   }
 
   private recordSample(position: Vector3): void {
@@ -519,7 +556,7 @@ export class RewardSystem extends createSystem({
     if (target != null) {
       const launchSpeed = MathUtils.clamp(speed * 1.6, 7, 11);
       this.aimAt(target, origin, launchSpeed, this.launchVelocity);
-      this.launch(orb, this.launchVelocity, 0);
+      this.launch(orb, this.launchVelocity, 0, target);
     } else if (speed > 1) {
       const launchSpeed = MathUtils.clamp(speed * 1.6, 5, 11);
       this.launchVelocity.copy(this.tmpDir).multiplyScalar(launchSpeed);
@@ -535,17 +572,31 @@ export class RewardSystem extends createSystem({
     const orb = this.orb;
     if (orb == null || !target.alive) return;
     if (orb.phase !== 'floating' && orb.phase !== 'morphing') return;
-    if (orb.age < MIN_LAUNCH_AGE || !this.bodyReady(orb)) return;
+    if (orb.age < MIN_LAUNCH_AGE || !this.bodyReady(orb)) {
+      // Remember the tap instead of dropping it; updateOrb fires it once the body is ready.
+      orb.queued = target;
+      return;
+    }
     this.aimAt(target, orb.object.position, TAP_SPEED, this.launchVelocity);
-    this.launch(orb, this.launchVelocity, 0);
+    this.launch(orb, this.launchVelocity, 0, target);
   }
 
-  private launch(orb: OrbState, velocity: Vector3, gravity: number): void {
+  private launch(orb: OrbState, velocity: Vector3, gravity: number, homing: TargetView | null = null): void {
     orb.entity.setValue(PhysicsBody, 'gravityFactor', gravity);
     orb.entity.setValue(PhysicsBody, 'linearDamping', 0);
-    orb.entity.addComponent(PhysicsManipulation, {
-      linearVelocity: [velocity.x, velocity.y, velocity.z],
-    });
+    orb.launched = true;
+    orb.queued = null;
+    orb.homing = homing;
+    orb.speed = homing != null ? MathUtils.clamp(velocity.length(), 8, 12) : velocity.length();
+    if (homing != null) {
+      // Homing flights are driven by steerHoming each frame, so Havok starts at rest.
+      orb.heading.copy(velocity).normalize();
+      orb.entity.addComponent(PhysicsManipulation, { linearVelocity: [0, 0, 0] });
+    } else {
+      orb.entity.addComponent(PhysicsManipulation, {
+        linearVelocity: [velocity.x, velocity.y, velocity.z],
+      });
+    }
     orb.phase = 'flying';
     orb.flightTime = 0;
     orb.prev.copy(orb.object.position);
@@ -556,6 +607,7 @@ export class RewardSystem extends createSystem({
   private updateFlight(orb: OrbState, delta: number): void {
     orb.flightTime += delta;
     const position = orb.object.position;
+    if (orb.homing != null && this.steerHoming(orb, delta)) return;
     for (const view of this.targetViews) {
       if (!view.alive || view.appear < 0.6) continue;
       if (this.segmentHitsSphere(orb.prev, position, view.object.position, HIT_RADIUS)) {
@@ -570,6 +622,43 @@ export class RewardSystem extends createSystem({
       soundEngine.cardMove();
       this.endOrb();
     }
+  }
+
+  /**
+   * Curve the orb toward its target's predicted position. The turn rate grows with
+   * flight time, so the orb always converges on the crystal. Returns true on impact.
+   */
+  private steerHoming(orb: OrbState, delta: number): boolean {
+    let target = orb.homing;
+    if (target == null) return false;
+    const position = orb.object.position;
+    if (!target.alive) {
+      target = this.pickTarget(position, orb.heading, 60);
+      orb.homing = target;
+      if (target == null) {
+        this.launchVelocity.copy(orb.heading).multiplyScalar(orb.speed);
+        orb.entity.addComponent(PhysicsManipulation, {
+          linearVelocity: [this.launchVelocity.x, this.launchVelocity.y, this.launchVelocity.z],
+        });
+        return false;
+      }
+    }
+
+    const distance = position.distanceTo(target.object.position);
+    if (distance <= HIT_RADIUS) {
+      this.hitTarget(target);
+      return true;
+    }
+
+    this.targetPosition(target, distance / orb.speed, this.tmpC);
+    this.tmpDir.subVectors(this.tmpC, position).normalize();
+    const turn = 1 - Math.exp(-delta * (5 + orb.flightTime * 10));
+    orb.heading.lerp(this.tmpDir, turn).normalize();
+
+    this.tmpStep.copy(position).addScaledVector(orb.heading, orb.speed * delta);
+    this.moveOrb(orb, this.tmpStep);
+    position.copy(this.tmpStep);
+    return false;
   }
 
   private segmentHitsSphere(a: Vector3, b: Vector3, center: Vector3, radius: number): boolean {
@@ -779,21 +868,24 @@ export class RewardSystem extends createSystem({
     }
 
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 192;
+    canvas.width = 256;
+    canvas.height = 256;
     this.labelContext = canvas.getContext('2d');
     this.labelTexture = new CanvasTexture(canvas);
     this.labelTexture.colorSpace = SRGBColorSpace;
     const label = new Mesh(
-      new PlaneGeometry(0.5, 0.1875),
+      new PlaneGeometry(CORE_READOUT_SIZE, CORE_READOUT_SIZE),
       new MeshBasicMaterial({
         map: this.labelTexture,
         transparent: true,
         toneMapped: false,
         depthWrite: false,
+        // Always drawn over the core's glow so the readout never washes out.
+        depthTest: false,
       }),
     );
-    label.position.set(0, -0.27, 0.01);
+    label.position.set(0, CORE_READOUT_Y, 0.2);
+    label.renderOrder = 20;
     label.raycast = noRaycast;
     this.core.add(label);
     this.drawLabel();
@@ -810,15 +902,22 @@ export class RewardSystem extends createSystem({
     if (key === this.labelKey) return;
     this.labelKey = key;
 
-    context.clearRect(0, 0, 512, 192);
+    context.clearRect(0, 0, 256, 256);
+    context.beginPath();
+    context.arc(128, 128, 122, 0, Math.PI * 2);
+    context.fillStyle = 'rgba(12, 8, 22, 0.94)';
+    context.fill();
+    context.lineWidth = 8;
+    context.strokeStyle = celebrating ? '#ffffff' : '#ffa94d';
+    context.stroke();
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillStyle = '#f6c58b';
-    context.font = '700 30px "DM Sans", system-ui, sans-serif';
-    context.fillText(celebrating ? 'CORE OVERCHARGED' : 'CORE CHARGE', 256, 44);
-    context.fillStyle = '#fff2dc';
-    context.font = '700 92px "DM Sans", system-ui, sans-serif';
-    context.fillText(`${percent}%`, 256, 120);
+    context.fillStyle = '#ffc98a';
+    context.font = '700 26px "DM Sans", system-ui, sans-serif';
+    context.fillText(celebrating ? 'OVERCHARGE' : 'CHARGE', 128, 78);
+    context.fillStyle = '#ffffff';
+    context.font = '700 76px "DM Sans", system-ui, sans-serif';
+    context.fillText(`${percent}%`, 128, 142);
     this.labelTexture.needsUpdate = true;
   }
 
@@ -854,6 +953,7 @@ export class RewardSystem extends createSystem({
       this.celebrate -= delta;
       if (this.celebrate <= 0) this.charge = 0;
     }
+    worldTheme.setCharge(this.charge);
     this.shownCharge += (this.charge - this.shownCharge) * (1 - Math.exp(-delta * (this.charge === 0 ? 3 : 6)));
     if (Math.abs(this.shownCharge - this.charge) < 0.002) this.shownCharge = this.charge;
     this.corePulse = Math.max(0, this.corePulse - delta * 2.2);

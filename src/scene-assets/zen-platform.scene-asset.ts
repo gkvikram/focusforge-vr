@@ -34,6 +34,11 @@ const stoneMaterial = new MeshStandardMaterial({
   flatShading: true,
 });
 
+deckMaterial.name = 'zen-deck';
+rockMaterial.name = 'zen-rock';
+inlayMaterial.name = 'zen-inlay';
+stoneMaterial.name = 'zen-stone';
+
 const platform = new Group();
 platform.name = 'Zen Platform';
 

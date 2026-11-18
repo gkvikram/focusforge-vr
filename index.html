@@ -167,6 +167,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
         gap: 8px;
       }
       .hud-title {
@@ -177,7 +178,7 @@
         color: var(--ivory);
         background: rgba(59, 42, 31, 0.72);
       }
-      .hud-actions { display: flex; gap: 8px; }
+      .hud-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
       .hud-btn {
         pointer-events: auto;
         appearance: none;
@@ -241,6 +242,9 @@
       <div class="hud-bar">
         <span class="hud-title">FocusForge 360°</span>
         <div class="hud-actions">
+          <button id="cycle-theme" class="hud-btn" type="button" aria-label="Cycle theme: Zen Garden, Cyberpunk Rooftop, Orbital Station">
+            Cycle Theme
+          </button>
           <button id="gyro-toggle" class="hud-btn" type="button" aria-pressed="false">
             Gyro: Off
           </button>

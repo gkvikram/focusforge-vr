@@ -12,6 +12,7 @@ import {
   ShaderMaterial,
   Vector3,
 } from '@iwsdk/core';
+import { worldTheme } from '../world/world-theme.js';
 
 const MOTE_COUNT = 180;
 const SUN_DIRECTION = new Vector3(-0.5, 0.3, -0.81).normalize();
@@ -88,6 +89,8 @@ export class SanctuarySystem extends createSystem({}) {
     sunDisc.lookAt(0, 0, 0);
     sunDisc.renderOrder = -1;
     this.world.createTransformEntity(sunDisc, { persistent: true });
+    worldTheme.bindings.sun = sun;
+    worldTheme.bindings.sunDisc = sunDisc.material as ShaderMaterial;
 
     this.createMotes();
   }
@@ -115,6 +118,7 @@ export class SanctuarySystem extends createSystem({}) {
       blending: AdditiveBlending,
     });
 
+    worldTheme.bindings.motes = this.moteMaterial;
     const motes = new InstancedMesh(new PlaneGeometry(1, 1), this.moteMaterial, MOTE_COUNT);
     motes.name = 'Ambient Light Motes';
     motes.frustumCulled = false;

@@ -9,6 +9,7 @@ import { ControllerInputSystem } from './input.js';
 import { setupLanding } from './landing.js';
 import { MobileControlsSystem } from './mobile/MobileControls.js';
 import { PanelSystem } from './panel.js';
+import { WorldMorphSystem } from './world/world-morph-system.js';
 
 World.create(
   document.getElementById('scene-container') as HTMLDivElement,
@@ -17,6 +18,7 @@ World.create(
   world.registerSystem(PanelSystem);
   world.registerSystem(ControllerInputSystem);
   world.registerSystem(SanctuarySystem);
+  world.registerSystem(WorldMorphSystem);
   world.registerSystem(KanbanSystem);
   world.registerSystem(PomodoroSystem);
   world.registerSystem(AudioConsoleSystem);

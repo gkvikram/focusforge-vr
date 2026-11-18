@@ -40,9 +40,19 @@ export const CONSOLE_SWITCH_RADIUS = 0.7;
 export const CONSOLE_ROW_Y = 1.13;
 export const CONSOLE_SLOT_STEP = 0.118;
 
-/** Central Energy Core hangs behind the board, above its top rail. */
-export const CORE_POSITION: readonly [number, number, number] = [0, 2.3, -1.75];
+/**
+ * Central Energy Core hangs behind the board, above its top rail. Sitting at 2.25m
+ * (lowered from 2.3m) keeps its ring clear of the top HUD buttons in 360° mode,
+ * while the readout disc stays just above the board's top rail line of sight.
+ */
+export const CORE_POSITION: readonly [number, number, number] = [0, 2.25, -1.75];
 export const CORE_RING_RADIUS = 0.4;
+/** Offset and diameter of the dark charge-readout disc in front of the core. */
+export const CORE_READOUT_Y = -0.24;
+export const CORE_READOUT_SIZE = 0.3;
+
+/** Cards compress their slot spacing so a full column still fits on the board. */
+export const CARD_COLUMN_SPAN = 0.45;
 
 /** Stress targets orbit just outside the 3.2m platform edge. */
 export const TARGET_ORBIT_RADII = [3.5, 3.9, 3.45, 4.0, 3.7] as const;

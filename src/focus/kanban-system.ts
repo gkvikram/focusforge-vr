@@ -17,9 +17,11 @@ import {
   UIKitMLAsset,
   Vector3,
 } from '@iwsdk/core';
+import { soundEngine } from '../audio/SoundEngine.js';
 import { pointerGesture } from '../mobile/MobileControls.js';
-import { DOING, DONE, focusStore, TaskState, TODO } from './focus-store.js';
+import { DOING, DONE, focusStore, MAX_LIVE_TASKS, TaskState, TODO } from './focus-store.js';
 import {
+  CARD_COLUMN_SPAN,
   CARD_DEPTH,
   CARD_HEIGHT,
   CARD_RADIUS,
@@ -31,8 +33,15 @@ import {
   COLUMN_TITLES,
   polarX,
   polarZ,
+  WORKSPACE_Y,
 } from './layout.js';
-import { TaskCard } from './task-card-component.js';
+import { AddTaskButton, TaskCard } from './task-card-component.js';
+
+const ADD_BUTTON_Y = WORKSPACE_Y + 0.24;
+const ADD_BUTTON_HEIGHT = 0.048;
+const ADD_TEXTURE_WIDTH = 512;
+const ADD_TEXTURE_HEIGHT = Math.round((ADD_TEXTURE_WIDTH * ADD_BUTTON_HEIGHT) / CARD_WIDTH);
+const ADD_COOLDOWN_MS = 350;
 
 const COLUMN_COLORS = ['#cfae86', '#f2a03d', '#7fae8a'];
 const COLUMN_TAGS = ['TO-DO', 'DOING', 'DONE'];
@@ -103,7 +112,13 @@ export class KanbanSystem extends createSystem({
   cards: { required: [TaskCard] },
   pressedCards: { required: [TaskCard, Pressed] },
   grabbedCards: { required: [TaskCard, Grabbed] },
+  pressedAdd: { required: [AddTaskButton, Pressed] },
 }) {
+  private addContext: CanvasRenderingContext2D | null = null;
+  private addTexture: CanvasTexture | null = null;
+  private addLabelKey = '';
+  private addPressStartedAt = 0;
+  private lastAddAt = 0;
   private views = new Map<Entity, CardView>();
   private viewList: CardView[] = [];
   private headers: ColumnHeader[] = [];
@@ -114,18 +129,37 @@ export class KanbanSystem extends createSystem({
   private elapsed = 0;
 
   init(): void {
-    focusStore.tasks.forEach((task) => this.createCard(task));
+    focusStore.liveTasks().forEach((task) => this.createCard(task));
     this.layoutCards(true);
+    this.createAddButton();
     void this.createHeaders();
 
     this.cleanupFuncs.push(
-      focusStore.subscribe(() => {
+      focusStore.subscribe((event) => {
+        if (event?.kind === 'add') {
+          this.createCard(event.task, true);
+        } else if (event?.kind === 'remove') {
+          this.removeCard(event.task);
+        }
         this.layoutCards(false);
         for (const view of this.viewList) {
           drawCard(view.context, view.task);
           view.texture.needsUpdate = true;
         }
         this.updateCounts();
+        this.drawAddButton();
+      }),
+      this.queries.pressedAdd.subscribe('qualify', () => {
+        this.addPressStartedAt = performance.now();
+      }),
+      this.queries.pressedAdd.subscribe('disqualify', (entity) => {
+        if (pointerGesture.dragged) return;
+        const now = performance.now();
+        const quickTap = now - this.addPressStartedAt < QUICK_TAP_MS;
+        if (!entity.hasComponent(Hovered) && !quickTap) return;
+        if (now - this.lastAddAt < ADD_COOLDOWN_MS) return;
+        this.lastAddAt = now;
+        if (focusStore.addPresetTask() != null) soundEngine.cardMove();
       }),
       this.queries.pressedCards.subscribe('qualify', (entity) => {
         const view = this.views.get(entity);
@@ -189,7 +223,77 @@ export class KanbanSystem extends createSystem({
     return true;
   }
 
-  private createCard(task: TaskState): void {
+  private createAddButton(): void {
+    const canvas = document.createElement('canvas');
+    canvas.width = ADD_TEXTURE_WIDTH;
+    canvas.height = ADD_TEXTURE_HEIGHT;
+    this.addContext = canvas.getContext('2d');
+    this.addTexture = new CanvasTexture(canvas);
+    this.addTexture.colorSpace = SRGBColorSpace;
+    this.addTexture.anisotropy = 4;
+
+    const edgeMaterial = new MeshStandardMaterial({ color: 0xc57a1c, roughness: 0.6 });
+    const faceMaterial = new MeshStandardMaterial({
+      map: this.addTexture,
+      emissiveMap: this.addTexture,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.45,
+      roughness: 0.7,
+    });
+    const mesh = new Mesh(new BoxGeometry(CARD_WIDTH, ADD_BUTTON_HEIGHT, CARD_DEPTH), [
+      edgeMaterial,
+      edgeMaterial,
+      edgeMaterial,
+      edgeMaterial,
+      faceMaterial,
+      edgeMaterial,
+    ]);
+    mesh.name = 'Add Task Button';
+    const angle = COLUMN_ANGLES[TODO];
+    const radius = CARD_RADIUS + 0.005;
+    mesh.position.set(polarX(angle, radius), ADD_BUTTON_Y, polarZ(angle, radius));
+    mesh.lookAt(0, ADD_BUTTON_Y, 0);
+
+    const entity = this.world.createTransformEntity(mesh, { persistent: true });
+    entity.addComponent(AddTaskButton);
+    entity.addComponent(RayInteractable);
+    this.drawAddButton();
+  }
+
+  private drawAddButton(): void {
+    const context = this.addContext;
+    if (context == null || this.addTexture == null) return;
+    const full = focusStore.liveTasks().length >= MAX_LIVE_TASKS;
+    const key = String(full);
+    if (key === this.addLabelKey) return;
+    this.addLabelKey = key;
+
+    const w = ADD_TEXTURE_WIDTH;
+    const h = ADD_TEXTURE_HEIGHT;
+    context.clearRect(0, 0, w, h);
+    context.fillStyle = full ? '#8a7a6a' : '#f2a03d';
+    context.beginPath();
+    context.roundRect(0, 0, w, h, h / 2);
+    context.fill();
+    context.fillStyle = '#3b2a1f';
+    context.font = `700 ${Math.round(h * 0.52)}px ${CARD_FONT}`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(full ? 'Board full' : '+ Add Task', w / 2, h / 2 + 2);
+    this.addTexture.needsUpdate = true;
+  }
+
+  private removeCard(task: TaskState): void {
+    const index = this.viewList.findIndex((view) => view.task.id === task.id);
+    if (index < 0) return;
+    const [view] = this.viewList.splice(index, 1);
+    this.views.delete(view.entity);
+    view.texture.dispose();
+    view.edgeMaterial.dispose();
+    view.entity.dispose();
+  }
+
+  private createCard(task: TaskState, spawnAtButton = false): void {
     const canvas = document.createElement('canvas');
     canvas.width = TEXTURE_WIDTH;
     canvas.height = TEXTURE_HEIGHT;
@@ -218,6 +322,10 @@ export class KanbanSystem extends createSystem({
       edgeMaterial,
     ]);
     mesh.name = `Task Card: ${task.title}`;
+    if (spawnAtButton) {
+      const angle = COLUMN_ANGLES[TODO];
+      mesh.position.set(polarX(angle, CARD_RADIUS), ADD_BUTTON_Y, polarZ(angle, CARD_RADIUS));
+    }
 
     const entity = this.world.createTransformEntity(mesh, { persistent: true });
     entity.addComponent(TaskCard, { taskId: task.id });
@@ -246,9 +354,15 @@ export class KanbanSystem extends createSystem({
       const inColumn = this.viewList
         .filter((view) => view.task.column === column)
         .sort((a, b) => a.task.order - b.task.order);
+      const step =
+        inColumn.length > 1
+          ? Math.min(CARD_SLOT_STEP, CARD_COLUMN_SPAN / (inColumn.length - 1))
+          : CARD_SLOT_STEP;
       inColumn.forEach((view, slot) => {
-        const y = CARD_SLOT_TOP_Y - slot * CARD_SLOT_STEP;
-        view.targetPosition.set(polarX(angle, CARD_RADIUS), y, polarZ(angle, CARD_RADIUS));
+        const y = CARD_SLOT_TOP_Y - slot * step;
+        // Slightly staggered depth so compressed cards never z-fight.
+        const radius = CARD_RADIUS - slot * 0.004;
+        view.targetPosition.set(polarX(angle, radius), y, polarZ(angle, radius));
         this.helper.position.copy(view.targetPosition);
         this.helper.lookAt(this.origin.set(0, y, 0));
         view.targetQuaternion.copy(this.helper.quaternion);
@@ -280,7 +394,7 @@ export class KanbanSystem extends createSystem({
 
   private updateCounts(): void {
     this.headers.forEach((header, column) => {
-      const count = focusStore.tasks.filter((task) => task.column === column).length;
+      const count = focusStore.liveTasks().filter((task) => task.column === column).length;
       header.count?.setProperties({ text: String(count) });
     });
   }

@@ -1,10 +1,7 @@
 import {
   AdditiveBlending,
-  AudioSource,
-  AudioUtils,
   Color,
   createSystem,
-  Entity,
   Group,
   Mesh,
   MeshStandardMaterial,
@@ -13,6 +10,7 @@ import {
   TorusGeometry,
   UIKitMLAsset,
 } from '@iwsdk/core';
+import { soundEngine } from '../audio/SoundEngine.js';
 import { DOING, DONE, focusStore } from './focus-store.js';
 import {
   PEDESTAL_ANGLE,
@@ -71,7 +69,6 @@ export class PomodoroSystem extends createSystem({}) {
 
   private ringMaterial!: ShaderMaterial;
   private glowMaterial!: ShaderMaterial;
-  private ringEntity!: Entity;
   private timeText: TextElement | null = null;
   private statusText: TextElement | null = null;
   private startLabel: TextElement | null = null;
@@ -159,7 +156,7 @@ export class PomodoroSystem extends createSystem({}) {
     const finished = focusStore.activeTask();
     this.resetTimer(FOCUS_SECONDS);
     this.flash = 1;
-    AudioUtils.play(this.ringEntity);
+    soundEngine.timerBell();
     if (finished) {
       focusStore.advance(finished.id);
     }
@@ -224,10 +221,7 @@ export class PomodoroSystem extends createSystem({}) {
       group.add(ring);
     }
 
-    this.ringEntity = this.world.createTransformEntity(group, { persistent: true });
-    this.ringEntity.addComponent(AudioSource, {
-      src: `${import.meta.env.BASE_URL}audio/chime.mp3`,
-    });
+    this.world.createTransformEntity(group, { persistent: true });
   }
 
   private async createPanel(): Promise<void> {

@@ -7,6 +7,7 @@ import {
   VisibilityState,
 } from '@iwsdk/core';
 import { WORKSPACE_Y } from '../focus/layout.js';
+import { worldTheme } from '../world/world-theme.js';
 
 /**
  * 360° Touch & Gyro fallback for phones without immersive WebXR
@@ -81,10 +82,13 @@ export class MobileControlsSystem extends createSystem({}) {
     this.toast = document.getElementById('hud-toast');
     const exitButton = document.getElementById('exit-360');
 
+    const themeButton = document.getElementById('cycle-theme');
     const onGyro = () => void this.setGyro(!this.gyroEnabled);
     const onExit = () => this.exit();
+    const onTheme = () => this.showToast(`Theme: ${worldTheme.cycle().label}`);
     this.gyroButton?.addEventListener('click', onGyro);
     exitButton?.addEventListener('click', onExit);
+    themeButton?.addEventListener('click', onTheme);
 
     canvas.addEventListener('pointerdown', this.onPointerDown);
     window.addEventListener('pointermove', this.onPointerMove);
@@ -95,6 +99,7 @@ export class MobileControlsSystem extends createSystem({}) {
     this.cleanupFuncs.push(
       () => this.gyroButton?.removeEventListener('click', onGyro),
       () => exitButton?.removeEventListener('click', onExit),
+      () => themeButton?.removeEventListener('click', onTheme),
       () => canvas.removeEventListener('pointerdown', this.onPointerDown),
       () => window.removeEventListener('pointermove', this.onPointerMove),
       () => window.removeEventListener('pointerup', this.onPointerUp),
