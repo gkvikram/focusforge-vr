@@ -1,5 +1,4 @@
 import { SessionMode, VisibilityState, World } from '@iwsdk/core';
-import { isPhoneWithoutHeadset } from './mobile/device.js';
 import { MobileControlsSystem } from './mobile/MobileControls.js';
 import { passthrough } from './world/passthrough.js';
 
@@ -28,12 +27,7 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
     document.documentElement.requestFullscreen?.().catch(() => undefined);
   };
 
-  // Phones and tablets have no headset; the emulator overlay would only get in the way there.
-  const routeToTouchMode = isPhoneWithoutHeadset;
-
-  if (routeToTouchMode) {
-    if (vrNote) vrNote.textContent = 'No headset detected. VR and MR open 360° Touch & Gyro Mode.';
-  } else if (!world.xrEnabled || !('xr' in navigator) || navigator.xr == null) {
+  if (!world.xrEnabled || !('xr' in navigator) || navigator.xr == null) {
     setVrUnavailable('No WebXR headset found. 360° mode works on any phone or desktop.');
   } else {
     navigator.xr
@@ -47,11 +41,6 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
   }
 
   vrButton.addEventListener('click', () => {
-    if (routeToTouchMode) {
-      passthrough.set(1);
-      startTouchMode();
-      return;
-    }
     try {
       world.launchXR({ sessionMode: SessionMode.ImmersiveVR });
     } catch {
@@ -60,8 +49,8 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
   });
 
   if (mrButton != null) {
-    mrButton.disabled = !routeToTouchMode;
-    if (!routeToTouchMode && world.xrEnabled && navigator.xr != null) {
+    mrButton.disabled = true;
+    if (world.xrEnabled && navigator.xr != null) {
       navigator.xr
         .isSessionSupported(SessionMode.ImmersiveAR)
         .then((supported) => {
@@ -71,11 +60,6 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
         .catch(() => undefined);
     }
     mrButton.addEventListener('click', () => {
-      if (routeToTouchMode) {
-        passthrough.set(0.2);
-        startTouchMode();
-        return;
-      }
       // Start with the environment partly faded so the real room is visible immediately.
       if (passthrough.opacity > 0.5) passthrough.set(0.3);
       try {
