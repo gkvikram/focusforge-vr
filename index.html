@@ -15,18 +15,241 @@
 -->
 
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#3b2a1f" />
+    <meta
+      name="description"
+      content="FocusForge VR - a floating zen sanctuary with a curved Kanban board and Pomodoro ring. Works in WebXR headsets and in 360° touch and gyro mode on phones."
     />
     <link rel="icon" href="data:," />
-    <title>IWSDK v0 Template</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>FocusForge VR</title>
+    <style>
+      :root {
+        --cocoa: #3b2a1f;
+        --ivory: #fff6ea;
+        --amber: #f2b866;
+        --muted: #7a6150;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #f7d9b5;
+        font-family: "DM Sans", system-ui, sans-serif;
+        color: var(--cocoa);
+        -webkit-tap-highlight-color: transparent;
+      }
+      [hidden] { display: none !important; }
+
+      .landing {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 16px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(59, 42, 31, 0) 30%, rgba(59, 42, 31, 0.45) 100%);
+      }
+      @media (min-width: 720px) {
+        .landing { align-items: center; }
+      }
+      .card {
+        width: 100%;
+        max-width: 440px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px;
+        border-radius: 24px;
+        background: rgba(255, 246, 234, 0.94);
+        box-shadow: 0 24px 60px rgba(59, 42, 31, 0.28);
+      }
+      .eyebrow {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      h1 {
+        margin: 0;
+        font-size: 34px;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+      }
+      .lede {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--muted);
+        text-wrap: pretty;
+      }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .btn {
+        appearance: none;
+        border: 0;
+        min-height: 52px;
+        padding: 14px 18px;
+        border-radius: 16px;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
+      }
+      .btn:active { transform: scale(0.98); }
+      .btn:focus-visible { outline: 3px solid var(--cocoa); outline-offset: 3px; }
+      .btn-primary { background: var(--cocoa); color: var(--ivory); }
+      .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+      .btn-touch {
+        background: var(--amber);
+        color: var(--cocoa);
+        font-size: 17px;
+        min-height: 60px;
+      }
+      .btn-touch.recommended { box-shadow: 0 0 0 3px rgba(242, 184, 102, 0.45); }
+      .note {
+        margin: 0;
+        min-height: 1em;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .features li {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+        background: rgba(59, 42, 31, 0.08);
+      }
+
+      .hud {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 12px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+      }
+      .hud-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .hud-title {
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ivory);
+        background: rgba(59, 42, 31, 0.72);
+      }
+      .hud-actions { display: flex; gap: 8px; }
+      .hud-btn {
+        pointer-events: auto;
+        appearance: none;
+        border: 0;
+        min-height: 44px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        color: var(--ivory);
+        background: rgba(59, 42, 31, 0.78);
+      }
+      .hud-btn[aria-pressed="true"] { background: var(--amber); color: var(--cocoa); }
+      .hud-btn:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+      .toast {
+        align-self: center;
+        max-width: 92%;
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: center;
+        color: var(--ivory);
+        background: rgba(59, 42, 31, 0.8);
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 200ms ease, transform 200ms ease;
+      }
+      .toast.visible { opacity: 1; transform: none; }
+    </style>
   </head>
-  <body style="margin: 0">
+  <body>
     <div id="scene-container"></div>
+
+    <main id="landing" class="landing" aria-labelledby="landing-title">
+      <section class="card">
+        <p class="eyebrow">Spatial focus studio</p>
+        <h1 id="landing-title">FocusForge VR</h1>
+        <p class="lede">
+          Plan and focus on a floating zen sanctuary above the clouds. Move tasks
+          across a curved Kanban board and let the Pomodoro ring finish them for you.
+        </p>
+        <ul class="features" aria-label="Features">
+          <li>Curved Kanban</li>
+          <li>Pomodoro ring</li>
+          <li>Hand &amp; gaze-pinch</li>
+        </ul>
+        <div class="actions">
+          <button id="enter-vr" class="btn btn-primary" type="button">Enter VR</button>
+          <button id="enter-360" class="btn btn-touch" type="button">
+            Enter 360° Touch &amp; Gyro Mode
+          </button>
+        </div>
+        <p id="vr-note" class="note" role="status"></p>
+      </section>
+    </main>
+
+    <div id="mobile-hud" class="hud" hidden>
+      <div class="hud-bar">
+        <span class="hud-title">FocusForge 360°</span>
+        <div class="hud-actions">
+          <button id="gyro-toggle" class="hud-btn" type="button" aria-pressed="false">
+            Gyro: Off
+          </button>
+          <button id="exit-360" class="hud-btn" type="button">Exit</button>
+        </div>
+      </div>
+      <div id="hud-toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+
     <script type="module" src="/src/index.ts"></script>
   </body>
 </html>

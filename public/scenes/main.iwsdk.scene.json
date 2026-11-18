@@ -3,61 +3,80 @@
   "units": "meters",
   "components": {
     "com.iwsdk.components.DomeGradient": {
-      "sky": [0.2423, 0.6172, 0.8308, 1],
-      "equator": [0.6584, 0.7084, 0.7913, 1],
-      "ground": [0.807, 0.7758, 0.7454, 1],
+      "sky": [0.38, 0.56, 0.86, 1],
+      "equator": [1.0, 0.78, 0.56, 1],
+      "ground": [0.98, 0.88, 0.78, 1],
       "intensity": 1
     },
     "com.iwsdk.components.IBLGradient": {
-      "sky": [0.6902, 0.749, 0.7843, 1],
-      "equator": [0.6584, 0.7084, 0.7913, 1],
-      "ground": [0.807, 0.7758, 0.7454, 1],
-      "intensity": 1
+      "sky": [0.86, 0.82, 0.78, 1],
+      "equator": [1.0, 0.82, 0.64, 1],
+      "ground": [0.92, 0.8, 0.7, 1],
+      "intensity": 1.1
     }
   },
   "resources": {},
   "nodes": [
     {
-      "id": "environment",
-      "name": "Environment",
+      "id": "zen-platform",
+      "name": "Floating Zen Platform",
       "content": {
         "type": "asset",
-        "asset": "environment-desk"
+        "asset": "zen-platform"
       },
       "transform": {
-        "position": [0, -0.106921583, 0],
-        "rotationDeg": [0, 180, 0]
+        "position": [0, 0, 0]
       },
       "components": {
         "LocomotionEnvironment": {}
       }
     },
     {
-      "id": "plant-sansevieria",
-      "name": "Plant Sansevieria",
+      "id": "clouds",
+      "name": "Procedural Clouds",
       "content": {
         "type": "asset",
-        "asset": "plant-sansevieria"
+        "asset": "zen-clouds"
       },
       "transform": {
-        "position": [1.2, 0.85, -1.8]
+        "position": [0, 0, 0]
       },
-      "components": {
-        "RayInteractable": {},
-        "DistanceGrabbable": {
-          "movementMode": "MoveFromTarget"
-        }
-      }
+      "components": {}
+    },
+    {
+      "id": "kanban-board",
+      "name": "Curved Kanban Board",
+      "content": {
+        "type": "asset",
+        "asset": "kanban-board"
+      },
+      "transform": {
+        "position": [0, 0, 0]
+      },
+      "components": {}
+    },
+    {
+      "id": "pomodoro-pedestal",
+      "name": "Pomodoro Pedestal",
+      "content": {
+        "type": "asset",
+        "asset": "pomodoro-pedestal"
+      },
+      "transform": {
+        "position": [-0.701, 0, -0.342]
+      },
+      "components": {}
     },
     {
       "id": "robot",
-      "name": "Robot",
+      "name": "Robot Companion",
       "content": {
         "type": "asset",
         "asset": "robot"
       },
       "transform": {
-        "position": [-1.2, 0.95, -1.8],
+        "position": [0.95, 0, -0.7],
+        "rotationDeg": [0, -40, 0],
         "scale": 0.5
       },
       "components": {
@@ -69,79 +88,6 @@
         "RayInteractable": {},
         "Robot": {}
       }
-    },
-    {
-      "id": "demo-cube",
-      "name": "Demo Cube",
-      "content": {
-        "type": "asset",
-        "asset": "demo-cube"
-      },
-      "transform": {
-        "position": [0, 1, -1.7]
-      },
-      "components": {
-        "RayInteractable": {},
-        "OneHandGrabbable": {},
-        "DemoCube": {}
-      }
-    },
-    {
-      "id": "welcome-panel",
-      "name": "Welcome Panel",
-      "content": {
-        "type": "asset",
-        "asset": "welcome-panel"
-      },
-      "transform": {
-        "position": [0, 1.6, -2],
-        "scale": 0.4
-      },
-      "components": {
-        "RayInteractable": {},
-        "ScreenSpace": {
-          "top": "20px",
-          "left": "20px",
-          "width": "25vw",
-          "height": "40%"
-        }
-      }
-    },
-    {
-      "id": "input-hud",
-      "name": "Controller Input HUD",
-      "content": {
-        "type": "asset",
-        "asset": "input-hud"
-      },
-      "transform": {
-        "position": [1.7, 1.35, -1.75],
-        "rotationDeg": [0, -44, 0],
-        "scale": 0.4
-      },
-      "components": {
-        "RayInteractable": {},
-        "ScreenSpace": {
-          "top": "20px",
-          "right": "20px",
-          "width": "25vw",
-          "height": "40%"
-        }
-      }
-    },
-    {
-      "id": "webxr-banner",
-      "name": "WebXR Banner",
-      "content": {
-        "type": "asset",
-        "asset": "webxr-banner"
-      },
-      "transform": {
-        "position": [0, 1, 1.8],
-        "rotationDeg": [0, 180, 0],
-        "scale": [1, -1, 1]
-      },
-      "components": {}
     }
   ]
 }

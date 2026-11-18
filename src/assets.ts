@@ -1,21 +1,9 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { AssetType, defineAssets } from '@iwsdk/core';
 import demoCube from './scene-assets/demo-cube.scene-asset.js';
+import kanbanBoard from './scene-assets/kanban-board.scene-asset.js';
+import pomodoroPedestal from './scene-assets/pomodoro-pedestal.scene-asset.js';
+import zenClouds from './scene-assets/zen-clouds.scene-asset.js';
+import zenPlatform from './scene-assets/zen-platform.scene-asset.js';
 
 // Build every public URL from BASE_URL so the runtime, the managed editor, and
 // subpath builds all resolve the same file.
@@ -57,5 +45,19 @@ export default defineAssets({
     type: AssetType.UIKitML,
     name: 'Controller Input HUD',
   },
+  'kanban-column': {
+    url: publicAssetUrl('ui/kanban-column.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Kanban Column Header',
+  },
+  'pomodoro-panel': {
+    url: publicAssetUrl('ui/pomodoro.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Pomodoro Controls',
+  },
   'demo-cube': demoCube,
+  'zen-platform': zenPlatform,
+  'zen-clouds': zenClouds,
+  'kanban-board': kanbanBoard,
+  'pomodoro-pedestal': pomodoroPedestal,
 });

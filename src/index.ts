@@ -1,22 +1,11 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { World } from '@iwsdk/core';
 import projectOptions from 'virtual:iwsdk-project';
+import { KanbanSystem } from './focus/kanban-system.js';
+import { PomodoroSystem } from './focus/pomodoro-system.js';
+import { SanctuarySystem } from './focus/sanctuary-system.js';
 import { ControllerInputSystem } from './input.js';
+import { setupLanding } from './landing.js';
+import { MobileControlsSystem } from './mobile/MobileControls.js';
 import { PanelSystem } from './panel.js';
 import { RobotSystem } from './robot.js';
 
@@ -27,4 +16,13 @@ World.create(
   world.registerSystem(RobotSystem);
   world.registerSystem(PanelSystem);
   world.registerSystem(ControllerInputSystem);
+  world.registerSystem(SanctuarySystem);
+  world.registerSystem(KanbanSystem);
+  world.registerSystem(PomodoroSystem);
+  world.registerSystem(MobileControlsSystem);
+
+  const mobile = world.getSystem(MobileControlsSystem);
+  if (mobile) {
+    setupLanding(world, mobile);
+  }
 });

@@ -1,0 +1,113 @@
+<style>
+  @font-face {
+    font-family: "DM Sans";
+    src: url("https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAkJxhTg.ttf");
+    font-weight: 500;
+  }
+
+  @font-face {
+    font-family: "DM Sans";
+    src: url("https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwARZthTg.ttf");
+    font-weight: 700;
+  }
+
+  .root {
+    font-family: "DM Sans";
+    width: 260px;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-radius: 24px;
+    background-color: #3b2a1f;
+  }
+
+  .time {
+    font-size: 52px;
+    font-weight: 700;
+    color: #fff4e6;
+    letter-spacing: 1px;
+  }
+
+  .status {
+    font-size: 15px;
+    font-weight: 500;
+    color: #f2b866;
+    margin-bottom: 12px;
+  }
+
+  .row {
+    flex-direction: row;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .btn {
+    flex-grow: 1;
+    height: 44px;
+    border-radius: 22px;
+    align-items: center;
+    justify-content: center;
+    background-color: #f2b866;
+    cursor: pointer;
+  }
+
+  .btn:hover {
+    background-color: #ffd08a;
+  }
+
+  .btn-label {
+    font-size: 17px;
+    font-weight: 700;
+    color: #3b2a1f;
+  }
+
+  .ghost {
+    background-color: #5a4334;
+  }
+
+  .ghost:hover {
+    background-color: #6e5341;
+  }
+
+  .ghost-label {
+    color: #fff4e6;
+  }
+
+  .reset {
+    margin-top: 8px;
+    height: 30px;
+    width: 100%;
+    border-radius: 15px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .reset:hover {
+    background-color: #5a4334;
+  }
+
+  .reset-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #d8c4b0;
+  }
+</style>
+<div class="root">
+  <div id="time" class="time">25:00</div>
+  <div id="status" class="status">Ready to focus</div>
+  <div class="row">
+    <div id="start-button" class="btn">
+      <div id="start-label" class="btn-label">Start</div>
+    </div>
+    <div id="demo-button" class="btn ghost">
+      <div class="btn-label ghost-label">Demo 10s</div>
+    </div>
+  </div>
+  <div id="reset-button" class="reset">
+    <div class="reset-label">Reset board</div>
+  </div>
+</div>
