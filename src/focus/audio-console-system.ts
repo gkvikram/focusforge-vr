@@ -10,6 +10,7 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
+  PokeInteractable,
   Pressed,
   RayInteractable,
   SphereGeometry,
@@ -29,7 +30,7 @@ import {
   CONSOLE_SWITCH_INWARD,
   consolePoint,
 } from './layout.js';
-import { ConsoleControl } from './reward-components.js';
+import { ConsoleControl, ExitXRButton } from './reward-components.js';
 
 const MUTE_INDEX = AMBIENT_CHANNELS.length;
 const QUICK_TAP_MS = 350;
@@ -59,6 +60,15 @@ interface ControlView {
   kick: number;
   pressStartedAt: number;
   lastToggleAt: number;
+}
+
+interface ExitView {
+  entity: Entity;
+  housing: Mesh;
+  material: MeshStandardMaterial;
+  kick: number;
+  pressStartedAt: number;
+  lastActivatedAt: number;
 }
 
 function createLabel(text: string): Mesh {
@@ -91,14 +101,17 @@ function createLabel(text: string): Mesh {
 export class AudioConsoleSystem extends createSystem({
   controls: { required: [ConsoleControl] },
   pressedControls: { required: [ConsoleControl, Pressed] },
+  pressedExit: { required: [ExitXRButton, Pressed] },
 }) {
   private views = new Map<Entity, ControlView>();
   private viewList: ControlView[] = [];
+  private exitView: ExitView | null = null;
   private elapsed = 0;
 
   init(): void {
     soundEngine.installUnlock();
     CONTROLS.forEach((_, index) => this.createControl(index));
+    this.createExitButton();
 
     this.cleanupFuncs.push(
       this.world.visibilityState.subscribe((state) => {
@@ -120,12 +133,29 @@ export class AudioConsoleSystem extends createSystem({
         if (!entity.hasComponent(Hovered) && !quickTap) return;
         this.activate(view);
       }),
+      this.queries.pressedExit.subscribe('qualify', () => {
+        if (this.exitView) this.exitView.pressStartedAt = performance.now();
+      }),
+      this.queries.pressedExit.subscribe('disqualify', (entity) => {
+        const view = this.exitView;
+        if (view == null) return;
+        const quickTap = performance.now() - view.pressStartedAt < QUICK_TAP_MS;
+        if (!entity.hasComponent(Hovered) && !quickTap) return;
+        this.exitSession(view);
+      }),
     );
   }
 
   update(delta: number): void {
     this.elapsed += delta;
     const blend = 1 - Math.exp(-delta * 14);
+
+    const exit = this.exitView;
+    if (exit != null) {
+      exit.housing.visible = this.world.renderer.xr.isPresenting;
+      exit.kick = Math.max(0, exit.kick - delta * 5);
+      exit.material.emissiveIntensity = 0.25 + exit.kick * 1.8;
+    }
     for (const view of this.viewList) {
       const on = view.index === MUTE_INDEX ? soundEngine.muted : soundEngine.isChannelOn(AMBIENT_CHANNELS[view.index]);
       view.led += ((on ? 1 : 0) - view.led) * blend;
@@ -157,6 +187,57 @@ export class AudioConsoleSystem extends createSystem({
       soundEngine.toggleChannel(AMBIENT_CHANNELS[view.index]);
     }
     pulseHaptics(this.world, null, 0.25, 18);
+  }
+
+  private exitSession(view: ExitView): void {
+    const xr = this.world.renderer.xr;
+    if (!xr.isPresenting) return;
+    const now = performance.now();
+    if (now - view.lastActivatedAt < TOGGLE_COOLDOWN_MS) return;
+    view.lastActivatedAt = now;
+    view.kick = 1;
+    pulseHaptics(this.world, null, 0.3, 20);
+    void xr.getSession()?.end();
+  }
+
+  private createExitButton(): void {
+    const material = new MeshStandardMaterial({
+      color: 0x7a2f26,
+      emissive: 0xe86a5a,
+      emissiveIntensity: 0.25,
+      roughness: 0.4,
+    });
+    const housing = new Mesh(new BoxGeometry(0.16, 0.046, 0.03), material);
+    housing.name = 'Exit XR Button';
+
+    // Sits directly under MUTE, hanging off the lower edge of the console slab.
+    const offset = 1.5 * CONSOLE_SLOT_STEP;
+    const [baseX, baseZ] = consolePoint(CONSOLE_SWITCH_INWARD);
+    housing.position.set(
+      baseX + Math.cos(CONSOLE_ANGLE) * offset,
+      CONSOLE_ROW_Y - 0.141,
+      baseZ + Math.sin(CONSOLE_ANGLE) * offset,
+    );
+    housing.rotation.y = -CONSOLE_ANGLE;
+
+    const trim = new Mesh(new BoxGeometry(0.168, 0.006, 0.032), brassMaterial);
+    trim.position.y = 0.026;
+    trim.raycast = () => undefined;
+    housing.add(trim);
+
+    const label = createLabel('EXIT XR');
+    label.scale.setScalar(1.45);
+    label.position.set(0, 0, 0.0155);
+    housing.add(label);
+
+    housing.visible = false;
+
+    const entity = this.world.createTransformEntity(housing, { persistent: true });
+    entity.addComponent(ExitXRButton);
+    entity.addComponent(RayInteractable);
+    entity.addComponent(PokeInteractable);
+
+    this.exitView = { entity, housing, material, kick: 0, pressStartedAt: 0, lastActivatedAt: 0 };
   }
 
   private createControl(index: number): void {
