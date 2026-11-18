@@ -215,7 +215,8 @@ export class RewardSystem extends createSystem({
           this.endOrb();
           return;
         }
-        this.recentMoves.set(event.task.id, performance.now());
+        if (event.kind === 'blocked') return;
+      this.recentMoves.set(event.task.id, performance.now());
       }),
       this.queries.pressedCards.subscribe('qualify', (entity) => {
         this.cardPressStart.set(entity, performance.now());

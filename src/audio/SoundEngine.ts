@@ -691,6 +691,15 @@ class SoundEngine {
     playNote(ctx, this.sfxBus, { type: 'sine', freq: 1040, start: t + 0.05, attack: 0.005, release: 0.2, gain: 0.05 });
   }
 
+  /** A gentle, low two-note nudge for "not yet": soft enough never to startle. */
+  softTone(): void {
+    const ctx = this.ready();
+    if (ctx == null) return;
+    const t = ctx.currentTime;
+    playNote(ctx, this.sfxBus, { type: 'sine', freq: 392, glideTo: 349.2, start: t, attack: 0.03, hold: 0.06, release: 0.34, gain: 0.07 });
+    playNote(ctx, this.sfxBus, { type: 'sine', freq: 293.7, glideTo: 261.6, start: t + 0.11, attack: 0.03, hold: 0.04, release: 0.4, gain: 0.05 });
+  }
+
   timerBell(): void {
     const ctx = this.ready();
     if (ctx == null) return;

@@ -30,7 +30,7 @@ export interface TaskState {
   removed: boolean;
 }
 
-export type TaskEventKind = 'move' | 'add' | 'remove';
+export type TaskEventKind = 'move' | 'add' | 'remove' | 'blocked';
 
 export interface TaskMoveEvent {
   kind: TaskEventKind;
@@ -75,10 +75,27 @@ class FocusStore {
     return active;
   }
 
-  /** To-Do -> Doing -> Done. Returns false when the task is already done or cleared. */
+  /** WIP limit of one: a To-Do task cannot start while another task is in Doing. */
+  isStartBlocked(id: number): boolean {
+    const task = this.tasks[id];
+    if (task == null || task.removed || task.column !== TODO) return false;
+    return this.activeTask() != null;
+  }
+
+  /** Tell listeners a start attempt was refused by the WIP limit. */
+  notifyBlocked(id: number): void {
+    const task = this.tasks[id];
+    if (task == null) return;
+    this.emit({ kind: 'blocked', task, from: task.column, to: task.column });
+  }
+
+  /** To-Do -> Doing -> Done. Returns false when the task is done, cleared or WIP-blocked. */
   advance(id: number): boolean {
     const task = this.tasks[id];
     if (task == null || task.removed || task.column === DONE) {
+      return false;
+    }
+    if (this.isStartBlocked(id)) {
       return false;
     }
     const from = task.column;

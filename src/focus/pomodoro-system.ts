@@ -24,6 +24,8 @@ import {
 
 const FOCUS_SECONDS = 25 * 60;
 const DEMO_SECONDS = 10;
+const WIP_HINT = 'Finish current task first!';
+const HINT_SECONDS = 2;
 
 const ringVertexShader = /* glsl */ `
 varying vec2 vUv;
@@ -66,6 +68,8 @@ export class PomodoroSystem extends createSystem({}) {
   private shownSecond = -1;
   private flash = 0;
   private elapsed = 0;
+  private baseStatus = '';
+  private hintRemaining = 0;
 
   private ringMaterial!: ShaderMaterial;
   private glowMaterial!: ShaderMaterial;
@@ -82,6 +86,10 @@ export class PomodoroSystem extends createSystem({}) {
         if (event == null) {
           this.resetTimer(FOCUS_SECONDS);
           this.setStatus('Board reset - pick a task');
+          return;
+        }
+        if (event.kind === 'blocked') {
+          this.showHint(WIP_HINT);
           return;
         }
         if (event.to === DOING) {
@@ -106,6 +114,12 @@ export class PomodoroSystem extends createSystem({}) {
 
   update(delta: number): void {
     this.elapsed += delta;
+    if (this.hintRemaining > 0) {
+      this.hintRemaining -= delta;
+      if (this.hintRemaining <= 0) {
+        this.statusText?.setProperties({ text: this.baseStatus });
+      }
+    }
     if (this.running) {
       this.remaining -= delta;
       if (this.remaining <= 0) {
@@ -170,7 +184,15 @@ export class PomodoroSystem extends createSystem({}) {
     this.remaining = nextDuration;
   }
 
+  /** Real status is remembered while a transient hint owns the display. */
   private setStatus(text: string): void {
+    this.baseStatus = text;
+    if (this.hintRemaining > 0) return;
+    this.statusText?.setProperties({ text });
+  }
+
+  private showHint(text: string): void {
+    this.hintRemaining = HINT_SECONDS;
     this.statusText?.setProperties({ text });
   }
 

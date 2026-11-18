@@ -26,14 +26,17 @@ export const COLUMN_HEADER_Y = WORKSPACE_Y + 0.295;
 export const CARD_SLOT_TOP_Y = WORKSPACE_Y + 0.15;
 export const CARD_SLOT_STEP = 0.13;
 
-export const PEDESTAL_ANGLE = -64 * DEG;
+/** Station angle, pulled ~15% inward from 64 degrees toward the board. */
+const STATION_ANGLE = 54.4 * DEG;
+
+export const PEDESTAL_ANGLE = -STATION_ANGLE;
 export const PEDESTAL_RADIUS = 0.78;
 export const PEDESTAL_TOP_Y = 0.98;
 export const RING_Y = 1.36;
 export const RING_RADIUS = 0.12;
 
 /** Spatial audio console, mirrored to the right of the board. */
-export const CONSOLE_ANGLE = 64 * DEG;
+export const CONSOLE_ANGLE = STATION_ANGLE;
 export const CONSOLE_RADIUS = 0.78;
 export const CONSOLE_TOP_Y = PEDESTAL_TOP_Y;
 export const CONSOLE_SWITCH_RADIUS = 0.7;

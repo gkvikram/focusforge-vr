@@ -136,6 +136,7 @@ export class KanbanSystem extends createSystem({
 
     this.cleanupFuncs.push(
       focusStore.subscribe((event) => {
+        if (event?.kind === 'blocked') return;
         if (event?.kind === 'add') {
           this.createCard(event.task, true);
         } else if (event?.kind === 'remove') {
@@ -218,6 +219,12 @@ export class KanbanSystem extends createSystem({
   private tryAdvance(view: CardView): boolean {
     const now = performance.now();
     if (now - view.lastAdvanceAt < ADVANCE_COOLDOWN_MS) return false;
+    if (focusStore.isStartBlocked(view.task.id)) {
+      view.lastAdvanceAt = now;
+      soundEngine.softTone();
+      focusStore.notifyBlocked(view.task.id);
+      return false;
+    }
     if (!focusStore.advance(view.task.id)) return false;
     view.lastAdvanceAt = now;
     return true;

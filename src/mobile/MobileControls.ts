@@ -7,6 +7,7 @@ import {
   VisibilityState,
 } from '@iwsdk/core';
 import { WORKSPACE_Y } from '../focus/layout.js';
+import { passthrough } from '../world/passthrough.js';
 import { worldTheme } from '../world/world-theme.js';
 
 /**
@@ -89,6 +90,22 @@ export class MobileControlsSystem extends createSystem({}) {
     this.gyroButton?.addEventListener('click', onGyro);
     exitButton?.addEventListener('click', onExit);
     themeButton?.addEventListener('click', onTheme);
+
+    const slider = document.getElementById('opacity-slider') as HTMLInputElement | null;
+    const sliderValue = document.getElementById('opacity-value');
+    const syncSlider = (opacity: number) => {
+      const percent = Math.round(opacity * 100);
+      if (slider != null && slider.value !== String(percent)) slider.value = String(percent);
+      slider?.setAttribute('aria-valuetext', `${percent} percent`);
+      if (sliderValue != null) sliderValue.textContent = `${percent}%`;
+    };
+    const onSlider = () => passthrough.set(Number(slider?.value ?? 100) / 100);
+    slider?.addEventListener('input', onSlider);
+    syncSlider(passthrough.opacity);
+    this.cleanupFuncs.push(
+      () => slider?.removeEventListener('input', onSlider),
+      passthrough.subscribe(syncSlider),
+    );
 
     canvas.addEventListener('pointerdown', this.onPointerDown);
     window.addEventListener('pointermove', this.onPointerMove);

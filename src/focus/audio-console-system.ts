@@ -108,7 +108,7 @@ export class AudioConsoleSystem extends createSystem({
         }
       }),
       focusStore.subscribe((event) => {
-        if (event != null) soundEngine.cardMove();
+        if (event != null && event.kind !== 'blocked') soundEngine.cardMove();
       }),
       this.queries.pressedControls.subscribe('qualify', (entity) => {
         const view = this.views.get(entity);

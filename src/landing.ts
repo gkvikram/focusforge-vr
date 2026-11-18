@@ -1,11 +1,13 @@
 import { SessionMode, VisibilityState, World } from '@iwsdk/core';
 import { MobileControlsSystem } from './mobile/MobileControls.js';
+import { passthrough } from './world/passthrough.js';
 
 /** Wires the 2D landing overlay: Enter VR and the 360° Touch & Gyro fallback. */
 export function setupLanding(world: World, mobile: MobileControlsSystem): void {
   const landing = document.getElementById('landing');
   const vrButton = document.getElementById('enter-vr') as HTMLButtonElement | null;
   const touchButton = document.getElementById('enter-360') as HTMLButtonElement | null;
+  const mrButton = document.getElementById('enter-mr') as HTMLButtonElement | null;
   const vrNote = document.getElementById('vr-note');
   if (landing == null || vrButton == null || touchButton == null) return;
 
@@ -34,11 +36,34 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
 
   vrButton.addEventListener('click', () => {
     try {
-      world.launchXR();
+      world.launchXR({ sessionMode: SessionMode.ImmersiveVR });
     } catch {
       setVrUnavailable('Could not start a VR session. Use 360° mode instead.');
     }
   });
+
+  if (mrButton != null) {
+    mrButton.disabled = true;
+    if (world.xrEnabled && navigator.xr != null) {
+      navigator.xr
+        .isSessionSupported(SessionMode.ImmersiveAR)
+        .then((supported) => {
+          mrButton.disabled = !supported;
+          if (!supported) mrButton.title = 'Mixed reality passthrough is not supported here';
+        })
+        .catch(() => undefined);
+    }
+    mrButton.addEventListener('click', () => {
+      // Start with the environment partly faded so the real room is visible immediately.
+      if (passthrough.opacity > 0.5) passthrough.set(0.3);
+      try {
+        world.launchXR({ sessionMode: SessionMode.ImmersiveAR });
+      } catch {
+        mrButton.disabled = true;
+        if (vrNote) vrNote.textContent = 'Could not start a mixed reality session.';
+      }
+    });
+  }
 
   touchButton.addEventListener('click', () => {
     hide();

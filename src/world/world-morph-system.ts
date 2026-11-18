@@ -20,7 +20,11 @@ import {
   type IUniform,
 } from '@iwsdk/core';
 import { CORE_POSITION } from '../focus/layout.js';
+import { passthrough } from './passthrough.js';
 import { THEMES, worldTheme, type ThemeParams } from './world-theme.js';
+
+/** Time constant for the smooth opacity transition (higher = snappier). */
+const FADE_RATE = 5;
 
 /*
  * Procedural world morph. Everything here is generated in code: one sky dome
@@ -66,6 +70,7 @@ uniform vec4 uFeatB;
 uniform float uSunGlowA;
 uniform float uSunGlowB;
 uniform vec3 uAccentB;
+uniform float uOpacity;
 varying vec3 vDir;
 
 float hash11(float p) {
@@ -211,6 +216,7 @@ void main() {
 
   gl_FragColor = vec4(col, 1.0);
   #include <colorspace_fragment>
+  gl_FragColor = vec4(gl_FragColor.rgb * uOpacity, uOpacity);
 }
 `;
 
@@ -331,12 +337,13 @@ const lampFragment = /* glsl */ `
 uniform vec3 uColorA;
 uniform vec3 uColorB;
 uniform float uTime;
+uniform float uOpacity;
 varying float vParity;
 varying float vHeight;
 void main() {
   vec3 c = mix(uColorA, uColorB, vParity) * (0.75 + 0.25 * sin(uTime * 2.2 + vParity * 6.0));
   c *= 0.55 + (vHeight + 0.14) * 1.6;
-  gl_FragColor = vec4(c, 1.0);
+  gl_FragColor = vec4(c, uOpacity);
   #include <colorspace_fragment>
 }
 `;
@@ -370,6 +377,9 @@ export class WorldMorphSystem extends createSystem({}) {
   private time = 0;
 
   private sky!: ShaderMaterial;
+  private dome!: Mesh;
+  /** Smoothed world opacity: 1 = full environment, 0 = workstation only. */
+  private fade = 1;
   private shell!: Mesh;
   private shellMaterial!: ShaderMaterial;
   private petals!: InstancedMesh;
@@ -420,6 +430,14 @@ export class WorldMorphSystem extends createSystem({}) {
 
     if (!this.platformBound) this.bindPlatform();
 
+    const target = this.targetFade();
+    if (target !== this.fade) {
+      const diff = target - this.fade;
+      this.fade = Math.abs(diff) < 0.002 ? target : this.fade + diff * (1 - Math.exp(-delta * FADE_RATE));
+      this.applyFade();
+      if (!this.active) this.apply(1);
+    }
+
     if (this.active) {
       this.progress = Math.min(1, this.progress + delta / WAVE_SECONDS);
       const eased = easeInOut(this.progress);
@@ -431,6 +449,20 @@ export class WorldMorphSystem extends createSystem({}) {
     }
 
     this.trackDrawCalls(delta);
+  }
+
+  /** Opaque (VR) sessions cannot show passthrough, so the slider only applies elsewhere. */
+  private targetFade(): number {
+    const session = this.world.session;
+    if (session != null && session.environmentBlendMode === 'opaque') return 1;
+    return passthrough.opacity;
+  }
+
+  private applyFade(): void {
+    this.sky.uniforms.uOpacity.value = this.fade;
+    (this.lamps.material as ShaderMaterial).uniforms.uOpacity.value = this.fade;
+    this.dome.visible = this.fade > 0.005;
+    this.lamps.visible = this.fade > 0.01;
   }
 
   /** Start a wave from the core towards `index`, or snap there when `instant`. */
@@ -485,7 +517,7 @@ export class WorldMorphSystem extends createSystem({}) {
     const lerp = MathUtils.lerp;
 
     this.fog.color.copy(this.mixHex(this.mixed, a.fogColor, b.fogColor, t));
-    this.fog.density = lerp(a.fogDensity, b.fogDensity, t);
+    this.fog.density = lerp(a.fogDensity, b.fogDensity, t) * (0.2 + 0.8 * this.fade);
     this.world.scene.environmentIntensity = lerp(a.envIntensity, b.envIntensity, t);
 
     const { sun, sunDisc, motes } = worldTheme.bindings;
@@ -497,12 +529,13 @@ export class WorldMorphSystem extends createSystem({}) {
       (sunDisc.uniforms.uColor.value as Color).copy(
         this.mixHex(this.mixed, a.sunDiscColor, b.sunDiscColor, t),
       );
-      sunDisc.uniforms.uOpacity.value = lerp(a.sunDiscOpacity, b.sunDiscOpacity, t);
+      sunDisc.uniforms.uOpacity.value = lerp(a.sunDiscOpacity, b.sunDiscOpacity, t) * this.fade;
     }
     if (motes) {
       (motes.uniforms.uColor.value as Color).copy(
         this.mixHex(this.mixed, a.moteColor, b.moteColor, t),
       );
+      motes.uniforms.uOpacity.value = 0.85 * this.fade;
     }
 
     const deck = this.platformMaterials.get('zen-deck');
@@ -516,9 +549,18 @@ export class WorldMorphSystem extends createSystem({}) {
       inlay.emissive.copy(this.mixHex(this.mixed, a.inlayEmissive, b.inlayEmissive, t));
       inlay.emissiveIntensity = lerp(a.inlayIntensity, b.inlayIntensity, t);
     }
+    const platformTransparent = this.fade < 0.999;
+    for (const material of this.platformMaterials.values()) {
+      if (material.transparent !== platformTransparent) {
+        material.transparent = platformTransparent;
+        material.needsUpdate = true;
+      }
+      material.opacity = this.fade;
+      material.visible = this.fade > 0.01;
+    }
 
     if (this.cloudsMaterial && this.cloudsObject) {
-      const opacity = lerp(a.cloudOpacity, b.cloudOpacity, t);
+      const opacity = lerp(a.cloudOpacity, b.cloudOpacity, t) * this.fade;
       const transparent = opacity < 0.999;
       if (this.cloudsMaterial.transparent !== transparent) {
         this.cloudsMaterial.transparent = transparent;
@@ -529,8 +571,8 @@ export class WorldMorphSystem extends createSystem({}) {
       this.cloudsObject.visible = opacity > 0.01;
     }
 
-    const petalAmount = lerp(a.petals, b.petals, t);
-    const rainAmount = lerp(a.rain, b.rain, t);
+    const petalAmount = lerp(a.petals, b.petals, t) * this.fade;
+    const rainAmount = lerp(a.rain, b.rain, t) * this.fade;
     (this.petals.material as ShaderMaterial).uniforms.uAmount.value = petalAmount;
     (this.rain.material as ShaderMaterial).uniforms.uAmount.value = rainAmount;
     this.petals.visible = petalAmount > 0.01;
@@ -610,17 +652,18 @@ export class WorldMorphSystem extends createSystem({}) {
         uSunGlowA: { value: 1 },
         uSunGlowB: { value: 1 },
         uAccentB: color(),
+        uOpacity: { value: 1 },
       } as Uniforms,
       side: DoubleSide,
       depthTest: false,
       depthWrite: false,
     });
-    const dome = new Mesh(new SphereGeometry(1, 32, 16), this.sky);
-    dome.name = 'Morphing Sky';
-    dome.renderOrder = -1e8;
-    dome.frustumCulled = false;
-    dome.raycast = noRaycast;
-    this.world.createTransformEntity(dome, { persistent: true });
+    this.dome = new Mesh(new SphereGeometry(1, 32, 16), this.sky);
+    this.dome.name = 'Morphing Sky';
+    this.dome.renderOrder = -1e8;
+    this.dome.frustumCulled = false;
+    this.dome.raycast = noRaycast;
+    this.world.createTransformEntity(this.dome, { persistent: true });
   }
 
   private createShell(): void {
@@ -731,7 +774,10 @@ export class WorldMorphSystem extends createSystem({}) {
         uColorA: { value: new Color(0xffd08a) },
         uColorB: { value: new Color(0xffb7c9) },
         uTime: { value: 0 },
+        uOpacity: { value: 1 },
       },
+      transparent: true,
+      depthWrite: false,
     });
     this.lamps = new InstancedMesh(new BoxGeometry(0.05, 0.28, 0.05), material, LAMP_COUNT);
     this.lamps.name = 'Rim Lamps';

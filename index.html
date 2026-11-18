@@ -54,6 +54,58 @@
       }
       [hidden] { display: none !important; }
 
+      #scene-container { position: fixed; inset: 0; z-index: 1; }
+      #scene-container canvas { display: block; }
+
+      /* Revealed through the transparent canvas when world opacity is lowered in 360° mode. */
+      .mr-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background:
+          radial-gradient(ellipse at 50% 35%, rgba(190, 220, 245, 0.55), rgba(190, 220, 245, 0) 62%),
+          linear-gradient(rgba(255, 255, 255, 0.28) 1px, transparent 1px) 0 0 / 64px 64px,
+          linear-gradient(90deg, rgba(255, 255, 255, 0.28) 1px, transparent 1px) 0 0 / 64px 64px,
+          linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px) 0 0 / 16px 16px,
+          linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px) 0 0 / 16px 16px,
+          linear-gradient(165deg, #6f8aa3 0%, #4a6178 55%, #354a5e 100%);
+      }
+      .btn-secondary {
+        background: rgba(59, 42, 31, 0.1);
+        color: var(--cocoa);
+        box-shadow: inset 0 0 0 2px rgba(59, 42, 31, 0.28);
+      }
+      .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+      .hud-slider {
+        pointer-events: auto;
+        align-self: flex-start;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        margin-bottom: auto;
+        padding: 8px 14px;
+        border-radius: 999px;
+        color: var(--ivory);
+        background: rgba(59, 42, 31, 0.78);
+      }
+      .hud-slider-label { font-size: 12px; font-weight: 700; white-space: nowrap; }
+      .hud-slider-value {
+        min-width: 3.2ch;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .hud-range {
+        width: clamp(64px, 14vw, 110px);
+        height: 28px;
+        margin: 0;
+        accent-color: var(--amber);
+        touch-action: pan-y;
+      }
+      .hud-range:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+
       .landing {
         position: fixed;
         inset: 0;
@@ -213,6 +265,7 @@
     </style>
   </head>
   <body>
+    <div id="mr-backdrop" class="mr-backdrop" aria-hidden="true"></div>
     <div id="scene-container"></div>
 
     <main id="landing" class="landing" aria-labelledby="landing-title">
@@ -230,6 +283,9 @@
         </ul>
         <div class="actions">
           <button id="enter-vr" class="btn btn-primary" type="button">Enter VR</button>
+          <button id="enter-mr" class="btn btn-secondary" type="button">
+            Enter MR Passthrough
+          </button>
           <button id="enter-360" class="btn btn-touch" type="button">
             Enter 360° Touch &amp; Gyro Mode
           </button>
@@ -250,6 +306,20 @@
           </button>
           <button id="exit-360" class="hud-btn" type="button">Exit</button>
         </div>
+      </div>
+      <div class="hud-slider">
+        <label for="opacity-slider" class="hud-slider-label">Passthrough / Opacity</label>
+        <input
+          id="opacity-slider"
+          class="hud-range"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value="100"
+          aria-valuetext="100 percent"
+        />
+        <output id="opacity-value" class="hud-slider-value" for="opacity-slider">100%</output>
       </div>
       <div id="hud-toast" class="toast" role="status" aria-live="polite"></div>
     </div>
