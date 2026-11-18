@@ -4,7 +4,7 @@ import {
   CONSOLE_ROW_Y,
   CONSOLE_SLAB_INWARD,
   CONSOLE_TOP_Y,
-  stationPoint,
+  consolePoint,
 } from '../focus/layout.js';
 
 const stone = new MeshStandardMaterial({ color: 0xe8dccb, roughness: 0.8 });
@@ -16,7 +16,7 @@ const console_ = new Group();
 console_.name = 'Spatial Audio Console';
 
 const stand = new Group();
-const [standX, standZ] = stationPoint(1, 0);
+const [standX, standZ] = consolePoint(0);
 stand.position.set(standX, 0, standZ);
 
 const base = new Mesh(new CylinderGeometry(0.17, 0.2, 0.06, 40), stone);
@@ -34,7 +34,7 @@ stand.add(cap);
 console_.add(stand);
 
 // Housings are 0.03 deep; the slab is flush behind them.
-const [slabX, slabZ] = stationPoint(1, CONSOLE_SLAB_INWARD);
+const [slabX, slabZ] = consolePoint(CONSOLE_SLAB_INWARD);
 const slab = new Mesh(new BoxGeometry(0.56, 0.23, 0.04), walnut);
 slab.position.set(slabX, CONSOLE_ROW_Y, slabZ);
 slab.rotation.y = -CONSOLE_ANGLE;

@@ -24,6 +24,8 @@ const FOCUS_SECONDS = 25 * 60;
 const DEMO_SECONDS = 10;
 const WIP_HINT = 'Finish current task first!';
 const HINT_SECONDS = 2;
+/** 1.2x the original 0.1 so the countdown and buttons are easier to read and tap. */
+const PANEL_SCALE = 0.12;
 
 const ringVertexShader = /* glsl */ `
 varying vec2 vUv;
@@ -252,7 +254,7 @@ export class PomodoroSystem extends createSystem({}) {
     panel.position.set(panelX, y, panelZ);
     panel.lookAt(lookX, y, lookZ);
     panel.rotateX(-0.3);
-    panel.scale.setScalar(0.1);
+    panel.scale.setScalar(PANEL_SCALE);
     const entity = this.world.createTransformEntity(panel, { persistent: true });
     entity.addComponent(RayInteractable);
 

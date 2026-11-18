@@ -151,7 +151,7 @@ export class MobileControlsSystem extends createSystem({}) {
     this.yaw = 0;
     this.pitch = 0;
     clampPixelRatio(this.world.renderer);
-    camera.position.set(0, WORKSPACE_Y + 0.04, 0.3);
+    camera.position.set(0, WORKSPACE_Y + 0.04, 0.45);
     this.applyFov();
     this.composeTouchTarget();
     camera.quaternion.copy(this.target);
@@ -275,7 +275,7 @@ export class MobileControlsSystem extends createSystem({}) {
       const aspect = window.innerWidth / Math.max(window.innerHeight, 1);
       const targetHorizontal = MathUtils.degToRad(118);
       const vertical = 2 * Math.atan(Math.tan(targetHorizontal / 2) / aspect);
-      camera.fov = MathUtils.clamp(MathUtils.radToDeg(vertical), 58, 72);
+      camera.fov = MathUtils.clamp(MathUtils.radToDeg(vertical), 58, 78);
     }
     camera.updateProjectionMatrix();
   }

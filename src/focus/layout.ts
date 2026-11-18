@@ -47,7 +47,19 @@ export const PEDESTAL_PANEL_INWARD = 0.04;
 export const RING_Y = 1.32;
 export const RING_RADIUS = 0.12;
 
-/** Spatial audio console, mirrored to the right of the board. */
+/**
+ * Spatial audio console, mirrored to the right of the board. It is nudged 0.18m outward and
+ * 0.10m toward the user (less negative z) so the RAIN switch clears the board's right edge.
+ */
+export const CONSOLE_SHIFT_X = 0.18;
+export const CONSOLE_SHIFT_Z = 0.1;
+
+/** Same as `stationPoint(1, inward)` but including the console's own outward/forward shift. */
+export function consolePoint(inward: number): [number, number] {
+  const [x, z] = stationPoint(1, inward);
+  return [x + CONSOLE_SHIFT_X, z + CONSOLE_SHIFT_Z];
+}
+
 export const CONSOLE_ANGLE = STATION_YAW;
 export const CONSOLE_TOP_Y = PEDESTAL_TOP_Y;
 export const CONSOLE_SWITCH_INWARD = 0.08;

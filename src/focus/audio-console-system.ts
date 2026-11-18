@@ -27,7 +27,7 @@ import {
   CONSOLE_ROW_Y,
   CONSOLE_SLOT_STEP,
   CONSOLE_SWITCH_INWARD,
-  stationPoint,
+  consolePoint,
 } from './layout.js';
 import { ConsoleControl } from './reward-components.js';
 
@@ -167,7 +167,7 @@ export class AudioConsoleSystem extends createSystem({
 
     const housing = new Mesh(new BoxGeometry(0.1, 0.15, 0.03), housingMaterial);
     housing.name = `Audio Control: ${definition.label}`;
-    const [baseX, baseZ] = stationPoint(1, CONSOLE_SWITCH_INWARD);
+    const [baseX, baseZ] = consolePoint(CONSOLE_SWITCH_INWARD);
     housing.position.set(baseX + tangentX, CONSOLE_ROW_Y, baseZ + tangentZ);
     housing.rotation.y = -CONSOLE_ANGLE;
 
