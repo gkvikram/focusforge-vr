@@ -1,4 +1,5 @@
 import { SessionMode, VisibilityState, World } from '@iwsdk/core';
+import { isPhoneWithoutHeadset } from './mobile/device.js';
 import { MobileControlsSystem } from './mobile/MobileControls.js';
 import { passthrough } from './world/passthrough.js';
 
@@ -28,9 +29,7 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
   };
 
   // Phones and tablets have no headset; the emulator overlay would only get in the way there.
-  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
-  const isHeadsetBrowser = /OculusBrowser|Quest|Pico|Wolvic|VIVE|SamsungBrowser.*VR/i.test(navigator.userAgent);
-  const routeToTouchMode = isTouchDevice && !isHeadsetBrowser;
+  const routeToTouchMode = isPhoneWithoutHeadset;
 
   if (routeToTouchMode) {
     if (vrNote) vrNote.textContent = 'No headset detected. VR and MR open 360° Touch & Gyro Mode.';
@@ -49,6 +48,7 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
 
   vrButton.addEventListener('click', () => {
     if (routeToTouchMode) {
+      passthrough.set(1);
       startTouchMode();
       return;
     }

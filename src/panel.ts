@@ -15,6 +15,7 @@
  */
 
 import { createSystem, UIKitMLAsset, VisibilityState } from '@iwsdk/core';
+import { isPhoneWithoutHeadset } from './mobile/device.js';
 
 export class PanelSystem extends createSystem({}) {
   init(): void {
@@ -24,7 +25,7 @@ export class PanelSystem extends createSystem({}) {
     if (xrButton == null || exitButton == null) {
       return;
     }
-    if (!this.world.xrEnabled) {
+    if (!this.world.xrEnabled || isPhoneWithoutHeadset) {
       xrButton.setProperties({ display: 'none' });
       exitButton.setProperties({ display: 'none' });
       return;
