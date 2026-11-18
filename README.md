@@ -14,7 +14,7 @@ task into an Energy Orb that charges the world around you.
 
 ## Live Demo
 
-**[https://vercel.app](https://vercel.app)**
+**[https://focusforge-vr-b-6i.vercel.app/](https://focusforge-vr-b-6i.vercel.app/)**
 
 Open it in the Meta Quest Browser for a real immersive session, on a desktop
 browser for the built-in WebXR emulator, or on a phone for 360° touch and gyro
