@@ -1,217 +1,180 @@
-# IWSDK Template for v0
+# FocusForge VR
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![IWSDK](https://img.shields.io/badge/IWSDK-1.0.0-6f42c1.svg)](https://developers.meta.com/horizon/documentation/web/webxr-iwsdk-overview)
+[![IWSDK](https://img.shields.io/badge/IWSDK-%40iwsdk%2Fcore-6f42c1.svg)](https://developers.meta.com/horizon/documentation/web/webxr-iwsdk-overview)
 [![Framework: Vite](https://img.shields.io/badge/Framework-Vite-646cff.svg)](https://vite.dev/)
 
-A WebXR starter built with the [Immersive Web SDK](https://developers.meta.com/horizon/documentation/web/webxr-iwsdk-overview)
-(IWSDK 1.0.0), packaged as a template for [v0](https://v0.app/) and deployable to
-Vercel as a static Vite app.
+**A gamified spatial productivity and mixed-reality sanctuary built on Meta's
+[Immersive Web SDK](https://developers.meta.com/horizon/documentation/web/webxr-iwsdk-overview)
+(`@iwsdk/core`).**
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmeta-quest%2Fiwsdk-v0-template)
+Plan and focus on a floating zen sanctuary above the clouds. Move tasks across a
+curved Kanban board, let the Pomodoro ring time your focus, and turn every finished
+task into an Energy Orb that charges the world around you.
 
-## What's included
+## Live Demo
 
-- **A VR desk scene** — environment, robot, plant, a grabbable demo cube, a
-  spatial welcome panel and a controller-input HUD, composed declaratively in
-  `public/scenes/main.iwsdk.scene.json`.
-- **Controller mapping** — `ControllerInputSystem` maps the right A/B buttons to
-  scale, left X to cycle color and left Y to reset, and mirrors live button,
-  trigger, grip and thumbstick state onto the HUD panel.
-- **Manifest-first project layout** — `iwsdk.config.json` is the single authority
-  for the active scene, asset catalog, component catalog, XR mode and world
-  features.
-- **Hand and gaze tracking** — `iwsdk.config.json` requests the `handTracking`
-  and `gazeTracking` XR features and enables the `gaze` world feature, so both
-  are on in-session without any app code.
-- **XR emulation without a headset** — IWER lets any browser enter an emulated
-  Quest 3 session on the dev server, including the v0 sandbox preview. See
-  [XR emulation](#xr-emulation) for how it is gated.
-- **Agent guidance** for v0, Claude Code, Cursor and Copilot, synced from the
-  upstream IWSDK guidance in `facebook/immersive-web-sdk`.
+**[https://vercel.app](https://vercel.app)**
 
-## Getting Started
+Open it in the Meta Quest Browser for a real immersive session, on a desktop
+browser for the built-in WebXR emulator, or on a phone for 360° touch and gyro
+mode. See the [Controls Guide](#controls-guide).
 
-First, run the development server:
+## Key Features
+
+### Single-Task Spatial Kanban (UIKitML)
+
+- A curved 3D task board with **To-Do**, **Doing** and **Done** columns, authored
+  as UIKitML panels.
+- A work-in-progress limit of one: a To-Do task cannot start while another task is
+  in Doing, which enforces single-task deep focus.
+- A 3D **Pomodoro ring timer** that starts when a card moves to Doing and
+  completes the task when it finishes.
+- A **Demo 10s** button on the timer panel runs a 10-second session so judges can
+  see the full loop without waiting 25 minutes.
+
+### Mixed-Reality Passthrough and Opacity Control
+
+- **Enter MR Passthrough** requests a WebXR `immersive-ar` session so the sanctuary
+  sits on top of your real room, desk and laptop.
+- A live **Passthrough / Opacity** slider (0%-100%) controls the environment's
+  translucency, so you can blend the virtual world with your workspace.
+
+### Procedural Spatial Audio (Web Audio API)
+
+- Zero audio assets: **Rain**, **Lo-Fi** and **Synthwave** soundscapes are
+  synthesized at runtime with the Web Audio API, along with the interaction sounds.
+- A physical **Spatial Audio console** in the scene has a toggle switch per
+  soundscape, a **MUTE** button and an **EXIT XR** button.
+- **EXIT XR** only appears while a headset session is active, and ends the session
+  so you can get back to the landing screen hands-free (pinch, poke or ray click).
+
+### Havok Physics Reward Loop and World Morphs
+
+- Clearing a task turns its card into a throwable **Energy Orb**.
+- Throw the orb to shatter the orbiting **Stress Targets**; each hit charges the
+  **Central Energy Core**.
+- As the core charges, shader-wave morphs transform the whole world:
+
+| Core charge | World                  |
+| ----------- | ---------------------- |
+| 0%          | Zen Garden             |
+| 50%         | Cyberpunk Rooftop      |
+| 100%        | Orbital Station        |
+
+## Controls Guide
+
+### Meta Quest (Meta Quest Browser)
+
+1. Open the live demo in the Quest Browser.
+2. Tap **Enter VR** for a fully virtual sanctuary, or **Enter MR Passthrough** to
+   see your real room behind it.
+3. Use hand tracking (pinch) or controllers (ray + trigger) to drag cards across
+   the board, press **Start** or **Demo 10s** on the timer, flip the audio switches
+   and throw Energy Orbs. Gaze-pinch also works.
+4. Use the **Passthrough / Opacity** slider to adjust how much of your room shows
+   through.
+5. Press **EXIT XR** on the audio console, under MUTE, to leave the session.
+
+### Desktop Browser (IWER WebXR emulator)
+
+1. Open the live demo, or run it locally (see [Local Setup](#tech-stack-and-local-setup)).
+2. Click **Enter VR** or **Enter MR Passthrough**. The Immersive Web Emulation
+   Runtime (IWER) starts an emulated Meta Quest 3 session with on-screen controller
+   panels.
+3. Move the emulated headset and controllers with the overlay and use the trigger,
+   grip and button controls to interact with the scene.
+
+The emulator is injected into the build; see [XR emulation](#xr-emulation) for how
+it is gated.
+
+### Mobile Phones (360° Touch and Gyro Mode)
+
+1. Open the live demo on your phone.
+2. Tap **Enter 360° Touch & Gyro Mode** for a non-headset view of the same scene.
+3. Drag to look around, tap cards and controls, and use **Gyro** to steer the view
+   with your phone's motion sensors.
+4. Use **Cycle Theme** to preview the three world themes and **Passthrough /
+   Opacity** to adjust translucency. Tap **Exit** to return to the landing screen.
+
+## Tech Stack and Local Setup
+
+| Area           | Technology                                                           |
+| -------------- | -------------------------------------------------------------------- |
+| Build          | [Vite](https://vite.dev/) and TypeScript                              |
+| XR framework   | `@iwsdk/core` (Immersive Web SDK, ECS)                                |
+| 3D             | [Three.js](https://threejs.org/), imported through `@iwsdk/core`      |
+| Spatial UI     | UIKitML panels (`public/ui/*.uikitml`)                                |
+| Physics        | Havok Physics through the IWSDK physics components                    |
+| Audio          | Web Audio API, fully procedural                                       |
+| Desktop XR     | IWER (Immersive Web Emulation Runtime)                                |
 
 ```bash
-npm install
-npm run dev
+npm install && npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) with your browser to see the
-result, then click **Enter XR** to start an emulated immersive session. You can
-start editing the scene by modifying `public/scenes/main.iwsdk.scene.json`, or
-the systems that drive it under `src/`. The page auto-updates as you edit.
+Open [http://localhost:5173](http://localhost:5173), then pick a mode on the
+landing screen.
 
-`npm run dev` is the IWSDK managed dev server (`iwsdk dev restart --foreground`),
-and the one script v0 starts on your behalf. It serves the app the way Vite does
-and additionally hosts the MCP command bridge behind the scene editor and the
-scene/ECS/XR tooling. There is no `--open`, so it does not launch the managed
-browser on boot — the first MCP or CLI command starts it lazily.
-
-A `predev` hook runs `scripts/setup-browser-deps.mjs` first. That script installs
-the system libraries managed Chromium needs inside the Fedora-based v0 sandbox,
-and exits immediately on every other platform.
-
-Two companion scripts drive that server's lifecycle:
+Other scripts:
 
 ```bash
-npm run dev:status
-npm run dev:down
+npm run dev:runtime   # plain Vite, no managed browser or MCP bridge
+npm run typecheck     # tsc --noEmit
+npm run build         # production build into dist/
+npm run preview       # serve the production build
 ```
 
-For plain Vite with none of the managed infrastructure — the mode `vercel dev`
-expects — use the runtime-only script:
+`npm run dev` is the IWSDK managed dev server. It serves the app like Vite and also
+hosts the tooling bridge used by the scene editor. Use `npm run dev:runtime` for
+bare Vite. Node 20.19+, 22.12+ or 24+ is required.
 
-```bash
-npm run dev:runtime   # vite
-```
-
-Run only one of the two at a time: `npm run dev:down` first if a managed server
-already holds the port.
-
-Optional one-time setup for the semantic code-reference MCP tools:
-
-```sh
-npm run reference:warmup
-```
-
-Before testing anything, typecheck. Type errors stop systems from initialising
-without necessarily logging to the console:
-
-```sh
-npm run typecheck
-```
-
-## Project structure
+### Project structure
 
 ```
-iwsdk.config.json                 project authority: scene, assets, components, world, dev
-vercel.json                       framework, output directory and SPA rewrite
+iwsdk.config.json            project authority: scene, assets, components, XR, emulator
 src/
-  index.ts                        World.create() + explicit system registration
-  assets.ts                       defineAssets() — catalog shared by runtime and editor
-  components.ts                   defineComponents() — catalog shared by runtime and editor
-  robot-component.ts              Robot tag component
-  robot.ts                        RobotSystem — look-at behavior and click audio
-  demo-cube-component.ts          DemoCube tag component and its color palette
-  input.ts                        ControllerInputSystem — face buttons and HUD mirroring
-  panel.ts                        PanelSystem — Enter XR / Exit to Browser wiring
-  scene-assets/                   *.scene-asset.ts — parentless Object3D prototypes
+  index.ts                   World.create() and system registration
+  landing.ts                 landing screen: Enter VR / MR / 360° buttons
+  focus/                     Kanban, Pomodoro, audio console, rewards, layout
+  world/                     world themes and shader-wave morph system
+  audio/                     procedural Web Audio sound engine
+  mobile/                    360° touch and gyro controls
+  scene-assets/              parentless Object3D prototypes shared by runtime and editor
 public/
-  scenes/main.iwsdk.scene.json    composition only — manifest IDs, transforms, components
-  ui/*.uikitml                    runtime-loaded panels
-  gltf/ audio/ textures/          static assets
-scripts/
-  setup-browser-deps.mjs          predev — managed-browser system libs for the v0 sandbox
+  scenes/                    *.iwsdk.scene.json scene composition
+  ui/                        *.uikitml spatial panels
 ```
 
-Composition lives in JSON; geometry, materials and URLs live in TypeScript. Scene
-JSON references assets only by manifest ID.
+### XR emulation
 
-## Using this template in v0
+IWER is injected by `@iwsdk/vite-plugin-dev`. In this project `iwsdk.config.json`
+sets `dev.emulator.injectOnBuild` to `true`, so deployed builds include the
+emulator, and `dev.emulator.activation` allows `localhost`, `*.vercel.app` and the
+v0 preview hostnames. On a real headset IWER steps aside automatically
+(`/OculusBrowser/` is excluded), so Quest uses native WebXR.
 
-Open the repository in [v0](https://v0.app/) and it runs in a Vercel Sandbox: a
-real Node.js VM with a framework-aware dev server, a terminal and Claude Code
-pre-installed. v0 detects Vite, starts `npm run dev` itself, and proxies the
-result through a generated HTTPS hostname — a secure context, which is what
-WebXR requires. That script starts the managed dev server rather than bare Vite;
-it serves the app on the same port, and its `predev` hook prepares the sandbox
-for the managed browser the agent tooling drives.
-
-To point a fresh chat at your own copy, fork this repository and give v0 the fork
-URL. Agent guidance is already wired up: `AGENTS.md` at the root, path-scoped
-detail in `src/AGENTS.md`, `public/ui/AGENTS.md` and `public/scenes/AGENTS.md`,
-and skill procedures under `.claude/skills/` mirrored into `.agents/skills/`.
+WebXR needs a secure context: `https://` deployments and `http://localhost` both
+qualify. To test a headset against your dev machine, run
+`IWSDK_DEV_HTTPS=1 npm run dev` and accept the self-signed certificate on the
+device.
 
 ## Deploy on Vercel
 
-The easiest way to deploy is to import the repository into
-[Vercel](https://vercel.com/new), or run `vercel` from the project root.
-
-`vercel.json` selects the Vite framework preset, builds to `dist/`, sends
+`vercel.json` selects the Vite preset, builds to `dist/`, sends
 `Permissions-Policy: xr-spatial-tracking=*` so WebXR is allowed, and rewrites
-unmatched paths to `/index.html`. Static files under `public/` still win, because
-Vercel checks the filesystem before applying rewrites.
-
-WebXR requires a secure context. The deployed HTTPS URL and `http://localhost`
-both qualify; a plain-HTTP LAN address does not. To test on a physical headset
-against your dev machine, run `IWSDK_DEV_HTTPS=1 npm run dev` and accept the
-self-signed certificate on the device.
-
-To deploy under a subpath, set `VITE_BASE_PATH` at build time.
-
-## XR emulation
-
-IWER is not part of the app bundle by default — `@iwsdk/vite-plugin-dev` injects
-it, and two separate gates decide whether it reaches the page. Both are set in
-`iwsdk.config.json` under `dev.emulator`, which is the project authority for this;
-the plugin rejects the same options passed to `iwsdkDev()` in `vite.config.ts`.
-
-| Gate            | Default     | Effect of the default                                            |
-| --------------- | ----------- | ---------------------------------------------------------------- |
-| `injectOnBuild` | `false`     | `vite build` emits no emulator, so deploys have nothing to run   |
-| `activation`    | `localhost` | the injected runtime stays inert on any non-localhost hostname   |
-
-The default `activation` is the one that bites in practice: the dev server always
-injects IWER, but a v0 preview is served from a generated `*.v0.build` hostname
-(older sandboxes used `*.vusercontent.net`), so the runtime loads and then sits
-inert. This template widens `activation` to cover the hostnames a preview
-actually uses:
-
-```jsonc
-"dev": {
-  "emulator": {
-    "device": "metaQuest3",
-    "activation": {
-      "source": "^(localhost|127\\.0\\.0\\.1|.*\\.vercel\\.app|.*\\.vusercontent\\.net|.*\\.v0\\.build)$"
-    }
-  }
-}
-```
-
-The pattern is matched against `location.hostname` alone — no scheme, port or
-path — so each term is a bare host suffix. v0 has renamed its preview domain
-before; if it happens again, add a term here rather than widening to `.*`.
-
-A regex is an object here (`{ source, flags }`), not a `/.../` string. On a real
-headset IWER steps aside regardless, via the default `userAgentException` of
-`/OculusBrowser/`.
-
-`injectOnBuild` is deliberately left at its default. Emulating a headset is a
-development affordance, and injecting the runtime adds roughly 1 MB to the
-production bundle — a cost every visitor pays, including on domains where
-`activation` returns false. The consequence is that **a deployed build ships no
-emulator**: `npm run dev` and the v0 sandbox get IWER, a `vercel deploy` does
-not. Set `injectOnBuild: true` if you want deploys emulated too; the
-`.vercel.app` term in `activation` is there for that case and is otherwise inert.
+unmatched paths to `/index.html`. Import the repository into
+[Vercel](https://vercel.com/new) or run `vercel` from the project root.
 
 ## Notes
 
-- Import Three.js classes from `@iwsdk/core`, never from `three` — a direct
-  `three` import creates a duplicate instance and subtle breakage.
-- `@iwsdk/vite-plugin-dev` depends on Playwright, so the first `npm install` in a
-  fresh sandbox downloads Chromium, and `predev` installs the system libraries it
-  needs to launch. Set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` to skip the download
-  when you only need to build — CI does exactly that.
-- `package-lock.json` is committed, so `npm ci` reproduces the dependency tree
-  exactly. Regenerate it with `npm install` whenever you change `package.json`.
-
-## Learn More
-
-- [Immersive Web SDK documentation](https://developers.meta.com/horizon/documentation/web/webxr-iwsdk-overview)
-- [`facebook/immersive-web-sdk`](https://github.com/facebook/immersive-web-sdk) —
-  the upstream repository this template's agent guidance is synced from
-- [v0 documentation](https://v0.app/docs)
-- [Vite documentation](https://vite.dev/) and the
-  [Vercel Vite preset](https://vercel.com/docs/frameworks/vite)
-- [WebXR Device API](https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API)
+- Import Three.js classes from `@iwsdk/core`, never from `three`, to avoid a
+  duplicate Three.js instance.
+- The first `npm install` downloads Chromium for the managed dev tooling. Set
+  `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` to skip it when you only need to build.
 
 ## License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the
-full text.
-
-Note that IWSDK itself is MIT-licensed; this template's Apache-2.0 terms cover
-the template's own source, not its dependencies.
+full text. IWSDK itself is MIT-licensed; this project's Apache-2.0 terms cover its
+own source, not its dependencies.
