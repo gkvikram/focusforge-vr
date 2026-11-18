@@ -26,21 +26,33 @@ export const COLUMN_HEADER_Y = WORKSPACE_Y + 0.295;
 export const CARD_SLOT_TOP_Y = WORKSPACE_Y + 0.15;
 export const CARD_SLOT_STEP = 0.13;
 
-/** Station angle, pulled ~15% inward from 64 degrees toward the board. */
-const STATION_ANGLE = 54.4 * DEG;
+/**
+ * Side stations sit outside the board's 50 degree arc (its edge is at x = 0.74m) so they never
+ * overlap the To-Do or Done columns, and each turns 35 degrees inward toward the user.
+ */
+export const STATION_X = 1.05;
+export const STATION_Z = -0.75;
+const STATION_YAW = 35 * DEG;
 
-export const PEDESTAL_ANGLE = -STATION_ANGLE;
-export const PEDESTAL_RADIUS = 0.78;
-export const PEDESTAL_TOP_Y = 0.98;
-export const RING_Y = 1.36;
+/** Point on a station, `inward` metres along its facing direction (toward the user). side: -1 left, +1 right. */
+export function stationPoint(side: -1 | 1, inward: number): [number, number] {
+  const yaw = side * STATION_YAW;
+  return [side * STATION_X - Math.sin(yaw) * inward, STATION_Z + Math.cos(yaw) * inward];
+}
+
+/** Left Pomodoro pedestal. */
+export const PEDESTAL_ANGLE = -STATION_YAW;
+export const PEDESTAL_TOP_Y = 0.9;
+export const PEDESTAL_PANEL_INWARD = 0.04;
+export const RING_Y = 1.32;
 export const RING_RADIUS = 0.12;
 
 /** Spatial audio console, mirrored to the right of the board. */
-export const CONSOLE_ANGLE = STATION_ANGLE;
-export const CONSOLE_RADIUS = 0.78;
+export const CONSOLE_ANGLE = STATION_YAW;
 export const CONSOLE_TOP_Y = PEDESTAL_TOP_Y;
-export const CONSOLE_SWITCH_RADIUS = 0.7;
-export const CONSOLE_ROW_Y = 1.13;
+export const CONSOLE_SWITCH_INWARD = 0.08;
+export const CONSOLE_SLAB_INWARD = 0.045;
+export const CONSOLE_ROW_Y = 1.05;
 export const CONSOLE_SLOT_STEP = 0.118;
 
 /**

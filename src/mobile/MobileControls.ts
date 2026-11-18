@@ -268,7 +268,15 @@ export class MobileControlsSystem extends createSystem({}) {
 
   private applyFov(): void {
     const camera = this.world.camera;
-    camera.fov = window.innerHeight > window.innerWidth ? 74 : 58;
+    if (window.innerHeight > window.innerWidth) {
+      camera.fov = 74;
+    } else {
+      // Aim for ~118° horizontal so the Pomodoro, Kanban and audio stations share one view.
+      const aspect = window.innerWidth / Math.max(window.innerHeight, 1);
+      const targetHorizontal = MathUtils.degToRad(118);
+      const vertical = 2 * Math.atan(Math.tan(targetHorizontal / 2) / aspect);
+      camera.fov = MathUtils.clamp(MathUtils.radToDeg(vertical), 58, 72);
+    }
     camera.updateProjectionMatrix();
   }
 

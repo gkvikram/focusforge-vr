@@ -1,12 +1,10 @@
 import { BoxGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial } from '@iwsdk/core';
 import {
   CONSOLE_ANGLE,
-  CONSOLE_RADIUS,
   CONSOLE_ROW_Y,
-  CONSOLE_SWITCH_RADIUS,
+  CONSOLE_SLAB_INWARD,
   CONSOLE_TOP_Y,
-  polarX,
-  polarZ,
+  stationPoint,
 } from '../focus/layout.js';
 
 const stone = new MeshStandardMaterial({ color: 0xe8dccb, roughness: 0.8 });
@@ -18,7 +16,8 @@ const console_ = new Group();
 console_.name = 'Spatial Audio Console';
 
 const stand = new Group();
-stand.position.set(polarX(CONSOLE_ANGLE, CONSOLE_RADIUS), 0, polarZ(CONSOLE_ANGLE, CONSOLE_RADIUS));
+const [standX, standZ] = stationPoint(1, 0);
+stand.position.set(standX, 0, standZ);
 
 const base = new Mesh(new CylinderGeometry(0.17, 0.2, 0.06, 40), stone);
 base.position.y = 0.03;
@@ -34,19 +33,15 @@ cap.position.y = CONSOLE_TOP_Y - 0.02;
 stand.add(cap);
 console_.add(stand);
 
-// Housings sit at CONSOLE_SWITCH_RADIUS and are 0.03 deep; the slab is flush behind them.
-const slabRadius = CONSOLE_SWITCH_RADIUS + 0.015 + 0.02;
+// Housings are 0.03 deep; the slab is flush behind them.
+const [slabX, slabZ] = stationPoint(1, CONSOLE_SLAB_INWARD);
 const slab = new Mesh(new BoxGeometry(0.56, 0.23, 0.04), walnut);
-slab.position.set(polarX(CONSOLE_ANGLE, slabRadius), CONSOLE_ROW_Y, polarZ(CONSOLE_ANGLE, slabRadius));
+slab.position.set(slabX, CONSOLE_ROW_Y, slabZ);
 slab.rotation.y = -CONSOLE_ANGLE;
 console_.add(slab);
 
 const trim = new Mesh(new BoxGeometry(0.58, 0.014, 0.05), brass);
-trim.position.set(
-  polarX(CONSOLE_ANGLE, slabRadius),
-  CONSOLE_ROW_Y + 0.122,
-  polarZ(CONSOLE_ANGLE, slabRadius),
-);
+trim.position.set(slabX, CONSOLE_ROW_Y + 0.122, slabZ);
 trim.rotation.y = -CONSOLE_ANGLE;
 console_.add(trim);
 

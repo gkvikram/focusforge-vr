@@ -13,13 +13,11 @@ import {
 import { soundEngine } from '../audio/SoundEngine.js';
 import { DOING, DONE, focusStore } from './focus-store.js';
 import {
-  PEDESTAL_ANGLE,
-  PEDESTAL_RADIUS,
+  PEDESTAL_PANEL_INWARD,
   PEDESTAL_TOP_Y,
-  polarX,
-  polarZ,
   RING_RADIUS,
   RING_Y,
+  stationPoint,
 } from './layout.js';
 
 const FOCUS_SECONDS = 25 * 60;
@@ -203,10 +201,10 @@ export class PomodoroSystem extends createSystem({}) {
   private createRing(): void {
     const group = new Group();
     group.name = 'Pomodoro Ring';
-    const x = polarX(PEDESTAL_ANGLE, PEDESTAL_RADIUS);
-    const z = polarZ(PEDESTAL_ANGLE, PEDESTAL_RADIUS);
+    const [x, z] = stationPoint(-1, 0);
+    const [lookX, lookZ] = stationPoint(-1, 1);
     group.position.set(x, RING_Y, z);
-    group.lookAt(0, RING_Y, 0);
+    group.lookAt(lookX, RING_Y, lookZ);
 
     const track = new Mesh(
       new TorusGeometry(RING_RADIUS, 0.009, 12, 96),
@@ -248,10 +246,11 @@ export class PomodoroSystem extends createSystem({}) {
 
   private async createPanel(): Promise<void> {
     const panel = await this.world.assets.instantiate<UIKitMLAsset>('pomodoro-panel');
-    const radius = PEDESTAL_RADIUS - 0.04;
-    const y = PEDESTAL_TOP_Y + 0.115;
-    panel.position.set(polarX(PEDESTAL_ANGLE, radius), y, polarZ(PEDESTAL_ANGLE, radius));
-    panel.lookAt(0, y, 0);
+    const y = PEDESTAL_TOP_Y + 0.15;
+    const [panelX, panelZ] = stationPoint(-1, PEDESTAL_PANEL_INWARD);
+    const [lookX, lookZ] = stationPoint(-1, 1);
+    panel.position.set(panelX, y, panelZ);
+    panel.lookAt(lookX, y, lookZ);
     panel.rotateX(-0.3);
     panel.scale.setScalar(0.1);
     const entity = this.world.createTransformEntity(panel, { persistent: true });

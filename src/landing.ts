@@ -21,7 +21,20 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
     touchButton.classList.add('recommended');
   };
 
-  if (!world.xrEnabled || !('xr' in navigator) || navigator.xr == null) {
+  const startTouchMode = () => {
+    hide();
+    mobile.enter();
+    document.documentElement.requestFullscreen?.().catch(() => undefined);
+  };
+
+  // Phones and tablets have no headset; the emulator overlay would only get in the way there.
+  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+  const isHeadsetBrowser = /OculusBrowser|Quest|Pico|Wolvic|VIVE|SamsungBrowser.*VR/i.test(navigator.userAgent);
+  const routeToTouchMode = isTouchDevice && !isHeadsetBrowser;
+
+  if (routeToTouchMode) {
+    if (vrNote) vrNote.textContent = 'No headset detected. VR and MR open 360° Touch & Gyro Mode.';
+  } else if (!world.xrEnabled || !('xr' in navigator) || navigator.xr == null) {
     setVrUnavailable('No WebXR headset found. 360° mode works on any phone or desktop.');
   } else {
     navigator.xr
@@ -35,6 +48,10 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
   }
 
   vrButton.addEventListener('click', () => {
+    if (routeToTouchMode) {
+      startTouchMode();
+      return;
+    }
     try {
       world.launchXR({ sessionMode: SessionMode.ImmersiveVR });
     } catch {
@@ -43,8 +60,8 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
   });
 
   if (mrButton != null) {
-    mrButton.disabled = true;
-    if (world.xrEnabled && navigator.xr != null) {
+    mrButton.disabled = !routeToTouchMode;
+    if (!routeToTouchMode && world.xrEnabled && navigator.xr != null) {
       navigator.xr
         .isSessionSupported(SessionMode.ImmersiveAR)
         .then((supported) => {
@@ -54,6 +71,11 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
         .catch(() => undefined);
     }
     mrButton.addEventListener('click', () => {
+      if (routeToTouchMode) {
+        passthrough.set(0.2);
+        startTouchMode();
+        return;
+      }
       // Start with the environment partly faded so the real room is visible immediately.
       if (passthrough.opacity > 0.5) passthrough.set(0.3);
       try {
@@ -65,11 +87,7 @@ export function setupLanding(world: World, mobile: MobileControlsSystem): void {
     });
   }
 
-  touchButton.addEventListener('click', () => {
-    hide();
-    mobile.enter();
-    document.documentElement.requestFullscreen?.().catch(() => undefined);
-  });
+  touchButton.addEventListener('click', startTouchMode);
 
   mobile.onExit(() => {
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
