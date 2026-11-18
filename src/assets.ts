@@ -1,4 +1,5 @@
 import { AssetType, defineAssets } from '@iwsdk/core';
+import audioConsole from './scene-assets/audio-console.scene-asset.js';
 import demoCube from './scene-assets/demo-cube.scene-asset.js';
 import kanbanBoard from './scene-assets/kanban-board.scene-asset.js';
 import pomodoroPedestal from './scene-assets/pomodoro-pedestal.scene-asset.js';
@@ -21,12 +22,6 @@ export default defineAssets({
     url: publicAssetUrl('gltf/plantSansevieria/plantSansevieria.gltf'),
     type: AssetType.GLTF,
     name: 'Plant Sansevieria',
-    priority: 'lazy',
-  },
-  robot: {
-    url: publicAssetUrl('gltf/robot/robot.gltf'),
-    type: AssetType.GLTF,
-    name: 'Robot',
     priority: 'lazy',
   },
   'webxr-banner': {
@@ -60,4 +55,5 @@ export default defineAssets({
   'zen-clouds': zenClouds,
   'kanban-board': kanbanBoard,
   'pomodoro-pedestal': pomodoroPedestal,
+  'audio-console': audioConsole,
 });

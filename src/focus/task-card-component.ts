@@ -1,4 +1,6 @@
-import { createComponent } from '@iwsdk/core';
+import { createComponent, Types } from '@iwsdk/core';
 
-/** Tag for an interactive Kanban task card. */
-export const TaskCard = createComponent('TaskCard', {});
+/** An interactive Kanban task card; taskId indexes into focusStore.tasks. */
+export const TaskCard = createComponent('TaskCard', {
+  taskId: { type: Types.Int16, default: -1 },
+});

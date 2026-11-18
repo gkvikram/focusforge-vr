@@ -220,7 +220,7 @@ export class KanbanSystem extends createSystem({
     mesh.name = `Task Card: ${task.title}`;
 
     const entity = this.world.createTransformEntity(mesh, { persistent: true });
-    entity.addComponent(TaskCard);
+    entity.addComponent(TaskCard, { taskId: task.id });
     entity.addComponent(RayInteractable);
     entity.addComponent(OneHandGrabbable);
 

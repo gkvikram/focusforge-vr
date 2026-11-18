@@ -68,26 +68,16 @@
       "components": {}
     },
     {
-      "id": "robot",
-      "name": "Robot Companion",
+      "id": "audio-console",
+      "name": "Spatial Audio Console",
       "content": {
         "type": "asset",
-        "asset": "robot"
+        "asset": "audio-console"
       },
       "transform": {
-        "position": [0.95, 0, -0.7],
-        "rotationDeg": [0, -40, 0],
-        "scale": 0.5
+        "position": [0, 0, 0]
       },
-      "components": {
-        "AudioSource": {
-          "src": "./audio/chime.mp3",
-          "maxInstances": 3,
-          "playbackMode": "fade-restart"
-        },
-        "RayInteractable": {},
-        "Robot": {}
-      }
+      "components": {}
     }
   ]
 }

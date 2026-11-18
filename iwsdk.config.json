@@ -33,7 +33,7 @@
         "useWorker": true
       },
       "grabbing": true,
-      "physics": false,
+      "physics": true,
       "sceneUnderstanding": false,
       "environmentRaycast": false,
       "spatialUI": {
